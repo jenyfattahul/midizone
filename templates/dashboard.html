@@ -1,0 +1,51 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MidiZone - Dashboard</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-brand">
+            <div class="logo-circle">
+                <i class="fas fa-map-marker-alt"></i>
+            </div>
+            <h1>MidiZone</h1>
+        </div>
+        <div class="nav-menu">
+            <div class="user-profile">
+                <i class="fas fa-user-circle"></i>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div class="action-bar">
+            <a href="{% url 'input_lokasi' %}" class="btn btn-primary">
+                <i class="fas fa-plus-circle"></i> Input Lokasi Baru
+            </a>
+            <a href="{% url 'riwayat' %}" class="btn btn-success">
+                <i class="fas fa-history"></i> Lihat Riwayat
+            </a>
+        </div>
+
+        <div class="map-card">
+            <div class="map-placeholder">
+                <i class="fas fa-map-marked-alt"></i>
+                <p class="map-title">Area Peta Interaktif</p>
+                <p class="map-subtitle">Google Maps API akan diintegrasikan di sini</p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2026 PT Midi Utama Indonesia Tbk. | v1.0.0</p>
+    </footer>
+
+</body>
+</html>

@@ -1,0 +1,145 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Location Potential Analysis - Riwayat</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-brand">
+            <div class="logo-circle"><i class="fas fa-map-marker-alt"></i></div>
+            <h1>MidiZone</h1>
+        </div>
+        <div class="nav-menu">
+            <a href="{% url 'dashboard' %}" class="nav-link">Dashboard</a>
+            <a href="{% url 'input_lokasi' %}" class="nav-link">Input Titik</a>
+            <a href="{% url 'riwayat' %}" class="nav-link active">Riwayat</a>
+            <div class="user-profile"><i class="fas fa-user-circle"></i></div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div class="filter-card">
+            <h2>Riwayat</h2>
+            <div class="filter-grid">
+                <div class="filter-group">
+                    <label>Koordinat</label>
+                    <input type="text" placeholder="e.g., -6.2081">
+                </div>
+                <div class="filter-group">
+                    <label>Status</label>
+                    <select><option>Semua Status</option></select>
+                </div>
+                <div class="filter-group">
+                    <label>Tanggal</label>
+                    <select><option>Semua Rentang</option></select>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-card">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>No. Dokumen</th>
+                        <th>Tanggal</th>
+                        <th>Alamat / Lokasi</th>
+                        <th>Koordinat</th>
+                        <th>Region</th>
+                        <th style="text-align: center;">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr id="item-1">
+                        <td class="doc-id">LOCSPEC/ANL/V/2026/001</td>
+                        <td>29 Maret 2026</td>
+                        <td>Jalan Sutera Barat, Tangerang</td>
+                        <td>-6.2081, 106.8227</td>
+                        <td>Banten</td>
+                        <td style="text-align: center; position: relative;">
+                            <div class="history-action">
+                                <button class="btn-dots" onclick="toggleMenu(event, 'm1')">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                                <div id="m1" class="dropdown-menu">
+                                    <a href="#"><i class="fas fa-info-circle"></i> Detail</a>
+                                    <a href="javascript:void(0)" onclick="triggerDownload('LOCSPEC/ANL/V/2026/001')">
+                                        <i class="fas fa-file-pdf"></i> Unduh PDF
+                                    </a>
+                                    <a href="#" class="delete-link" onclick="openModal('DOC-001', 'item-1')">
+                                        <i class="fas fa-trash-alt"></i> Hapus
+                                    </a>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <h3>Yakin ingin menghapus?</h3>
+            <p>Data tidak bisa dikembalikan</p>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="closeModal()">Batal</button>
+                <button class="btn btn-hapus" onclick="confirmDelete()">Hapus</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="downloadModal" class="modal">
+        <div class="modal-content">
+            <h3 style="color: #28a745; border-bottom-color: #28a745;">
+                <i class="fas fa-check-circle"></i> Berhasil Diunduh
+            </h3>
+            <p style="margin-top: 15px;">Data laporan telah berhasil diunduh dengan</p>
+            <div class="doc-number-text">
+                No. Dokumen: <span id="displayDocId" class="doc-success-id"></span>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-primary" onclick="closeDownloadModal()" style="width: 100%; justify-content: center;">Selesai</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>&copy; 2026 PT Midi Utama Indonesia Tbk. | v1.0.0</p>
+    </footer>
+
+    <script>
+        let selectedItemId = '';
+        function toggleMenu(e, id) {
+            e.stopPropagation();
+            document.querySelectorAll('.dropdown-menu').forEach(m => { if(m.id !== id) m.classList.remove('show'); });
+            document.getElementById(id).classList.toggle('show');
+        }
+        window.onclick = () => document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
+        function openModal(doc, id) {
+            selectedItemId = id;
+            document.getElementById('deleteModal').classList.add('show');
+        }
+        function closeModal() {
+            document.getElementById('deleteModal').classList.remove('show');
+        }
+        function confirmDelete() {
+            if(selectedItemId) { document.getElementById(selectedItemId).style.display = 'none'; }
+            closeModal();
+        }
+        function triggerDownload(docId) {
+            document.getElementById('displayDocId').innerText = docId;
+            document.getElementById('downloadModal').classList.add('show');
+        }
+
+        function closeDownloadModal() {
+            document.getElementById('downloadModal').classList.remove('show');
+        }
+    </script>
+</body>
+</html>

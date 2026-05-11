@@ -1,0 +1,230 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MidiZone - Input Lokasi</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-brand">
+            <div class="logo-circle">
+                <i class="fas fa-map-marker-alt"></i>
+            </div>
+            <h1>MidiZone</h1>
+        </div>
+        <div class="nav-menu">
+            <a href="{% url 'dashboard' %}" class="nav-link">Dashboard</a>
+            <a href="{% url 'input_lokasi' %}" class="nav-link active">Input Titik</a>
+            <a href="{% url 'riwayat' %}" class="nav-link">Riwayat</a>
+            <div class="user-profile">
+                <i class="fas fa-user-circle"></i>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div class="input-card">
+            <div class="tab-wrapper">
+                <button class="tab-btn active" id="btn-koord" onclick="attemptSwitchTab('koordinat')">Ketik Koordinat</button>
+                <button class="tab-btn" id="btn-peta" onclick="attemptSwitchTab('peta')">Pilih di Peta</button>
+            </div>
+
+            <div id="content-koordinat">
+                <h3>Titik Koordinat</h3>
+                <div class="form-group">
+                    <form onsubmit="event.preventDefault(); showResult('hasil-koord');">
+                        <div class="input-field-wrapper">
+                            <input type="text" id="input-koordinat" placeholder="Input koordinat" required
+                                oninvalid="this.setCustomValidity('Koordinat belum diisi')"
+                                oninput="this.setCustomValidity('')">
+                            <button type="submit" class="btn btn-primary">Search</button>
+                        </div>
+                    </form>
+                    <p class="hint-text">Format: latitude, longitude (e.g., -6.2081, 106.8227)</p>
+                </div>
+
+                <div id="hasil-koord" class="hasil-container">
+                    <div class="map-analysis">
+                        <i class="fas fa-draw-polygon analysis-icon"></i>
+                        <p class="analysis-title">Visualisasi Area Potensial (Ketik)</p>
+                    </div>
+                    <div class="grid-info">
+                        <div class="info-card">
+                            <h4>Informasi Lokasi</h4>
+                            <div class="data-row"><span class="label-data">Titik Koordinat</span><span class="value-data">{{ latitude|default:"-" }}, {{ longitude|default:"-" }}</span></div>
+                            <div class="data-row"><span class="label-data">Provinsi, Kota</span><span class="value-data">{{ provinsi|default:"-" }}, {{ kota|default:"-" }}</span></div>
+                            <div class="data-row"><span class="label-data">Nama Jalan</span><span class="value-data">{{ nama_jalan|default:"-" }}</span></div>
+                        </div>
+                        <div class="info-card info-card-blue">
+                            <h4>Hasil Analisis</h4>
+                            <div class="data-row"><span class="label-data">Status</span><span class="value-data status-layak">{{ status_kelayakan|default:"LAYAK" }}</span></div>
+                            <div class="data-row"><span class="label-data">Confidence</span><span class="value-data">{{ confidence_score|default:"87" }}%</span></div>
+                        </div>
+                    </div>
+                    <div id="action-koord" class="action-wrapper">
+                        <button type="button" class="btn btn-secondary" onclick="resetView()">Batal</button>
+                        <button type="button" class="btn btn-primary" onclick="showSuccessPopup()">Simpan Data</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="content-peta" style="display: none;">
+                <div class="map-card">
+                    <div class="map-placeholder">
+                        <i class="fas fa-map-marked-alt"></i>
+                        <p class="map-title">Area Peta Interaktif</p>
+                        <p class="map-subtitle">Google Maps API akan diintegrasikan di sini</p>
+                    </div>
+                </div>
+
+                <h3>Titik Koordinat yang di Pilih</h3>
+                <div class="form-group">
+                    <form onsubmit="event.preventDefault(); showResult('hasil-peta');">
+                        <div class="input-field-wrapper">
+                            <input type="text" id="coord-output" readonly placeholder="Klik pada peta untuk koordinat" required
+                                oninvalid="this.setCustomValidity('Lokasi belum dipilih')"
+                                oninput="this.setCustomValidity('')">
+                            <button type="submit" class="btn btn-primary">Search</button>
+                        </div>
+                    </form>
+                </div>
+                <div id="hasil-peta" class="hasil-container">
+                    <div class="map-analysis">
+                        <i class="fas fa-map-pin analysis-icon"></i>
+                        <p class="analysis-title">Visualisasi Area Potensial (Peta)</p>
+                    </div>
+                    <div class="grid-info">
+                        <div class="info-card">
+                            <h4>Informasi Lokasi</h4>
+                            <div class="data-row"><span class="label-data">Titik Koordinat</span><span class="value-data">{{ latitude|default:"-" }}, {{ longitude|default:"-" }}</span></div>
+                            <div class="data-row"><span class="label-data">Nama Jalan</span><span class="value-data">{{ nama_jalan|default:"-" }}</span></div>
+                        </div>
+                        <div class="info-card">
+                            <h4>Hasil Analisis</h4>
+                            <div class="data-row"><span class="label-data">Status</span><span class="value-data status-layak">LAYAK</span></div>
+                        </div>
+                    </div>
+                    <div id="action-peta" class="action-wrapper">
+                        <button type="button" class="btn btn-secondary" onclick="resetView()">Batal</button>
+                        <button type="button" class="btn btn-primary" onclick="showSuccessPopup()">Simpan Data</button>
+                    </div>
+                </div>
+            </div>
+        </div> 
+    </main>
+
+    <div id="success-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>Data Berhasil di Simpan</h3>
+            <p class="doc-number-text">No. Dokumen &nbsp;:&nbsp; <span class="doc-number-blue">{{ no_dokumen|default:"LOCSPEC/ANL/V/2026/001" }}</span></p>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="downloadPDF()">Unduh PDF</button>
+                <button class="btn btn-secondary" onclick="closeSuccessPopup()">Kembali</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="warning-modal" class="modal-overlay">
+        <div class="modal-content modal-warning-border">
+            <h3 class="warning-title-red">Peringatan!</h3>
+            <p class="warning-desc">Data belum disimpan. Jika ingin pindah, data pencarian saat ini akan hilang. Lanjutkan?</p>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="cancelSwitch()">Batal</button>
+                <button class="btn btn-primary" onclick="confirmSwitch()">Ya, Pindah</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>© 2026 PT Midi Utama Indonesia Tbk. | v1.0.0</p>
+    </footer>
+
+    <script>
+        let isResultActive = false;
+        let pendingTab = ''; 
+
+        function attemptSwitchTab(type) {
+            if (isResultActive) {
+                pendingTab = type;
+                document.getElementById('warning-modal').style.display = 'flex';
+            } else {
+                executeSwitchTab(type);
+            }
+        }
+
+        function confirmSwitch() {
+            document.getElementById('warning-modal').style.display = 'none';
+            isResultActive = false; 
+            executeSwitchTab(pendingTab);
+        }
+
+        function cancelSwitch() { document.getElementById('warning-modal').style.display = 'none'; }
+
+        function executeSwitchTab(type) {
+            const tabKoord = document.getElementById('content-koordinat');
+            const tabPeta = document.getElementById('content-peta');
+            const btnKoord = document.getElementById('btn-koord');
+            const btnPeta = document.getElementById('btn-peta');
+            
+            document.getElementById('hasil-koord').style.display = 'none';
+            document.getElementById('hasil-peta').style.display = 'none';
+            isResultActive = false; 
+
+            document.getElementById('input-koordinat').value = '';
+            document.getElementById('coord-output').value = '';
+
+            if(type === 'koordinat') {
+                tabKoord.style.display = 'block'; tabPeta.style.display = 'none';
+                btnKoord.classList.add('active'); btnPeta.classList.remove('active');
+            } else {
+                tabKoord.style.display = 'none'; tabPeta.style.display = 'block';
+                btnPeta.classList.add('active'); btnKoord.classList.remove('active');
+            }
+        }
+
+        function showResult(targetId) {
+            const inputKoord = document.getElementById('input-koordinat');
+            const inputPeta = document.getElementById('coord-output');
+
+            if (targetId === 'hasil-koord' && !inputKoord.value.trim()) {
+                inputKoord.reportValidity();
+                return;
+            }
+            
+            if (targetId === 'hasil-peta' && !inputPeta.value.trim()) {
+                inputPeta.reportValidity();
+                return;
+            }
+
+            isResultActive = true; 
+            document.getElementById('hasil-koord').style.display = 'none';
+            document.getElementById('hasil-peta').style.display = 'none';
+            
+            const target = document.getElementById(targetId);
+            target.style.display = 'block';
+
+            const actionId = (targetId === 'hasil-koord') ? 'action-koord' : 'action-peta';
+            if(document.getElementById(actionId)) document.getElementById(actionId).style.display = 'flex';
+
+            setTimeout(() => {
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        }
+
+        function resetView() { window.location.reload(); }
+        function showSuccessPopup() {
+            isResultActive = false; 
+            document.getElementById('success-modal').style.display = 'flex';
+            if(document.getElementById('action-koord')) document.getElementById('action-koord').style.display = 'none';
+            if(document.getElementById('action-peta')) document.getElementById('action-peta').style.display = 'none';
+        }
+        function closeSuccessPopup() { document.getElementById('success-modal').style.display = 'none'; }
+        function downloadPDF() { alert('Fitur Unduh PDF akan segera disiapkan!'); }
+    </script>
+</body>
+</html>
