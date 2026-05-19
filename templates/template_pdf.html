@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        @page { 
+            size: A4; 
+            margin: 15mm; 
+            /* Tambahan untuk nomor halaman di kanan bawah */
+            @bottom-right {
+                content: "Halaman " counter(page);
+                font-family: 'Helvetica', sans-serif;
+                font-size: 8pt;
+                color: #555;
+            }
+        }
+        body { font-family: 'Helvetica', sans-serif; font-size: 9pt; color: #000; line-height: 1.2; }
+        h1 { text-align: center; font-size: 14pt; margin: 0 0 10px 0; border-bottom: 1px solid #000; }
+        
+        /* Judul Perusahaan diperbesar */
+        .company-title { font-size: 12pt; font-weight: bold; margin-bottom: 5px; }
+        
+        .section-header { font-weight: bold; background: #eee; padding: 3px 5px; margin: 10px 0 5px 0; border-left: 3px solid #333; font-size: 9pt; text-transform: uppercase; }
+        table { width: 100%; border-collapse: collapse; font-size: 8pt; margin-bottom: 10px; }
+        th, td { border: 1px solid #999; padding: 4px; }
+        th { background-color: #f9f9f9; }
+        .flex-container { width: 100%; }
+        .col-50 { width: 48%; float: left; }
+        .summary-box { padding: 5px; border: 1px solid #333; background: #fff; font-size: 9pt; }
+    </style>
+</head>
+<body>
+    <h1>LAPORAN ANALISIS POTENSI LOKASI</h1>
+    <div style="font-size: 8pt; margin-bottom: 10px;">
+        <div class="company-title">PT Midi Utama Indonesia Tbk</div>
+        <strong>Doc:</strong> {{ analysis.nomor_dokumen }} | <strong>Cetak:</strong> {{ waktu_cetak }}
+    </div>
+
+    <div class="section-header">DATA LOKASI & DEMOGRAFI</div>
+    <table>
+        <tr><td width="20%"><strong>Koordinat</strong></td><td width="30%">{{ analysis.location.latitude }}, {{ analysis.location.longitude }}</td>
+            <td width="20%"><strong>Populasi (2020)</strong></td><td width="30%">{{ demography.population_2020 }} jiwa</td></tr>
+        <tr><td><strong>Alamat</strong></td><td>{{ analysis.location.address }}</td>
+            <td><strong>Proyeksi (2026)</strong></td><td>{{ demography.population_2026 }} jiwa</td></tr>
+        <tr><td><strong>Kepadatan</strong></td><td>{{ demography.population_density }} jiwa/km²</td>
+            <td><strong>Kategori</strong></td><td>{{ demography.population_category|upper }}</td></tr>
+    </table>
+
+    <div class="flex-container">
+        <div class="col-50" style="margin-right: 4%;">
+            <div class="section-header">POINT OF INTEREST (POI)</div>
+                <table>
+                    <thead><tr><th>Kategori</th><th>Detail</th></tr></thead>
+                    <tbody>
+                        {% for item in list_poi %}
+                        <tr>
+                            <td>{{ item.kategori }}</td>
+                            <td>{{ item.nama }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="2" style="text-align:center;">Data POI tidak ditemukan</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+        </div>
+        <div class="col-50">
+            <div class="section-header">KOMPETITOR</div>
+            <table>
+                {% for item in list_kompetitor %}
+                <tr><td>{{ item.kategori }}</td><td>{{ item.nama }}</td></tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+    <div style="clear: both;"></div>
+
+    <div class="section-header">ANALISIS KEPUTUSAN (DSS)</div>
+    <div class="summary-box">
+        <strong>Status:</strong> {{ model.feasibility_prediction|upper }} | 
+        <strong>Confidence:</strong> {{ model.confidence_score }}% | 
+        <strong>Traffic Estimation:</strong> {{ model.traffic_category_prediction|upper }}
+    </div>
+</body>
+</html>

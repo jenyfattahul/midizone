@@ -1,0 +1,111 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MidiZone - Detail Content</title>
+    <style>
+        .modal-content {
+    background: white;
+    padding: 30px;
+    border-radius: 8px;
+    /* TAMBAHKAN INI */
+    max-height: 85vh; /* Modal tidak akan lebih dari 85% tinggi layar */
+    overflow-y: auto;  /* Jika konten kepanjangan, akan muncul scrollbar otomatis */
+    position: relative;
+    /* Opsional: agar tampilannya tidak menempel atas-bawah */
+    margin: 5% auto; 
+}
+    </style>
+</head>
+<body>
+    <div class="grid-info">
+                        <div class="info-card">
+                            <h4><i class="fas fa-info-circle"></i> Master Data Lokasi</h4>
+                            <div class="data-row"><span class="label-data">Titik Koordinat</span><span class="value-data" style="color: #0056b3;">{{ latitude|default:"-" }}, {{ longitude|default:"-" }}</span></div>
+                            <div class="data-row"><span class="label-data">Provinsi, Kota</span><span class="value-data">{{ provinsi_kota|default:"-, -" }}</span></div>
+                            <div class="data-row"><span class="label-data">Nama Jalan</span><span class="value-data">{{ nama_jalan|default:"-" }}</span></div>
+                            <div class="data-row"><span class="label-data">Deskripsi Rute Jalan</span><span class="value-data" style="font-weight: 500; font-style: italic; color: #444;">{{ road_types_desc }}</span></div>
+                            <div class="data-row"><span class="label-data">Intersection Count</span><span class="value-data">{{ intersection_count }} titik</span></div>
+                        </div>
+
+                        <div class="info-card">
+                            <h4><i class="fas fa-users"></i> Analisis Demografi & Populasi</h4>
+                            <div class="data-row"><span class="label-data">Kepadatan Penduduk (2020)</span><span class="value-data">{{ population_density_2020|default:"-" }} jiwa/km²</span></div>
+                            <div class="data-row"><span class="label-data">Total Populasi (2020)</span><span class="value-data">{{ population_2020|default:"-" }} jiwa</span></div>
+                            <div class="data-row"><span class="label-data">Proyeksi Penduduk (2026)</span><span class="value-data" style="color: #007bff;">{{ population_2026|default:"-" }} jiwa</span></div>
+                            <div class="data-row"><span class="label-data">Kategori Kepadatan</span><span class="value-data" style="text-transform: uppercase;">{{ population_category|default:"-" }}</span></div>
+                        </div>
+
+                        <div class="info-card">
+                            <h4><i class="fas fa-utensils"></i> Ringkasan Point of Interest (POI)</h4>
+                            <div class="data-row">
+                                <span class="label-data">Restaurant / Cafe</span>
+                                <span class="value-data">
+                                    {{ poi_data.restaurant.count|default:"0" }} unit
+                                    {% if poi_data.restaurant.capped == 1 %}<span class="small-caption"><i class="fas fa-exclamation-triangle"></i> Restaurant lebih dari 20</span>{% endif %}
+                                </span>
+                            </div>
+                            <div class="data-row">
+                                <span class="label-data">Sekolah / Kampus</span>
+                                <span class="value-data">
+                                    {{ poi_data.school.count|default:"0" }} unit
+                                    {% if poi_data.school.capped == 1 %}<span class="small-caption"><i class="fas fa-exclamation-triangle"></i> Sekolah lebih dari 20</span>{% endif %}
+                                </span>
+                            </div>
+                            <div class="data-row">
+                                <span class="label-data">Bank / Fasilitas ATM</span>
+                                <span class="value-data">
+                                    {{ poi_data.bank.count|default:"0" }} unit
+                                    {% if poi_data.bank.capped == 1 %}<span class="small-caption"><i class="fas fa-exclamation-triangle"></i> Bank/ATM lebih dari 20</span>{% endif %}
+                                </span>
+                            </div>
+                            <div class="data-row">
+                                <span class="label-data">Rumah Sakit / Hospital</span>
+                                <span class="value-data">
+                                    {{ poi_data.hospital.count|default:"0" }} unit
+                                    {% if poi_data.hospital.capped == 1 %}<span class="small-caption"><i class="fas fa-exclamation-triangle"></i> RS/Hospital lebih dari 20</span>{% endif %}
+                                </span>
+                            </div>
+                            <hr>
+                            <div class="data-row"><span><strong>Total POI Terdeteksi</strong></span><span><strong style="font-size: 15px; color: #0056b3;">{{ summary_data.total_poi|default:"0" }}</strong></span></div>
+                        </div>
+
+                        <div class="info-card">
+                            <h4><i class="fas fa-store-alt"></i> Analisis Pasar & Kompetitor Ritel</h4>
+                            <div class="data-row"><span class="label-data">Supermarket</span><span class="value-data">{{ competitor_data.supermarket_count|default:"0" }} unit</span></div>
+                            <div class="data-row"><span class="label-data">Minimarket Kompetitor</span><span class="value-data">{{ competitor_data.other_minimarket_count|default:"0" }} unit</span></div>
+                            <div class="data-row"><span class="label-data">Internal (Alfamidi)</span><span class="value-data" style="color: #e65100;">{{ competitor_data.alfamidi_count|default:"0" }} unit</span></div>
+                            <hr>
+                            <div class="data-row"><span><strong>Total Akumulasi Kompetitor</strong></span><span><strong style="font-size: 15px; color: #c62828;">{{ competitor_data.total_competitor|default:"0" }}</strong></span></div>
+                        </div>
+
+                        <div class="info-card info-card-blue" style="grid-column: span 2;">
+                            <h4><i class="fas fa-brain"></i> Decision Support System (DSS) Analysis & Traffic Evaluation</h4>
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+                                <div>
+                                    <div class="data-row"><span class="label-data">Status Kelayakan Proyek</span><span class="value-data status-layak" style="color: #2e7d32; font-size: 14px;">{{ status_kelayakan|default:"LAYAK" }}</span></div>
+                                    <div class="data-row"><span class="label-data">Model Confidence Score</span><span class="value-data" style="font-size: 14px;">{{ confidence_score|default:"87" }}%</span></div>
+                                </div>
+                                <div>
+                                    <div class="data-row"><span class="label-data">Klaster Geografis Wilayah ML</span><span class="value-data" style="text-transform: uppercase;">{{ wilayah_ml|default:"-" }}</span></div>
+                                    <div class="data-row">
+                                        <span class="label-data">Volume Traffic Estimation</span>
+                                        <span class="value-data">
+                                            {% if category_ml == 'High' %}<span style="color: #c62828; padding: 2px 8px; background: #ffebee; border-radius: 3px; font-weight: bold;">High</span>
+                                            {% elif category_ml == 'Medium' %}<span style="color: #f57f17; padding: 2px 8px; background: #fffde7; border-radius: 3px; font-weight: bold;">Medium</span>
+                                            {% else %}<span style="color: #37474f; padding: 2px 8px; background: #eceff1; border-radius: 3px; font-weight: bold;">Low</span>{% endif %}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="manager-notes-container">
+                                <div class="manager-notes-title"><i class="fas fa-comment-alt"></i> Analisis DSS</div>
+                                <p class="manager-notes-text">{{ catatan_manager }}</p>
+                            </div>
+                        </div>
+                    </div>
+</body>
+</html>

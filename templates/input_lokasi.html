@@ -1,0 +1,776 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MidiZone - Input Lokasi</title>
+    <link class="sap-status-bar" rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        .sap-status-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: auto;
+            max-width: 500px;
+            background-color: #e2f0d9; 
+            border-top: 1px solid #a9d08e;
+            border-right: 1px solid #a9d08e;
+            padding: 8px 18px;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 13px;
+            color: #385723; 
+            display: none; 
+            align-items: center;
+            gap: 10px;
+            z-index: 99999;
+            box-shadow: 2px -2px 8px rgba(0,0,0,0.15);
+        }
+        .sap-status-bar i {
+            color: #248f24;
+            font-size: 14px;
+        }
+
+        /* Tata Letak Grid Simetris */
+        .grid-info {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-top: 15px;
+        }
+
+        .info-card {
+            background: #ffffff;
+            border: 1px solid #dcdcdc;
+            border-radius: 4px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .info-card h4 {
+            font-family: "Segoe UI", Arial, sans-serif;
+            color: #333333;
+            font-size: 15px;
+            font-weight: 600;
+            margin-top: 0;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #0056b3;
+            padding-bottom: 6px;
+        }
+
+        /* Kotak DSS Kesimpulan */
+        .info-card-blue {
+            border: 1px solid #b4c6e7;
+            background-color: #f2f5f9;
+        }
+
+        .info-card-blue h4 {
+            border-bottom: 2px solid #2f5597;
+            color: #2f5597;
+        }
+
+        /* Pola Baris Data Seragam */
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 9px 0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 13px;
+        }
+
+        .data-row:last-child {
+            border-bottom: none;
+        }
+
+        .label-data {
+            color: #666666;
+            font-weight: 500;
+            text-align: left;
+            flex: 1;
+            padding-right: 10px;
+        }
+
+        .value-data {
+            color: #111111;
+            font-weight: 600;
+            text-align: right;
+            flex: 1.5;
+            word-break: break-word;
+        }
+
+        hr {
+            border: 0;
+            border-top: 1px solid #dcdcdc;
+            margin: 12px 0;
+        }
+
+        .small-caption {
+            font-size: 11px;
+            color: #c62828;
+            display: block;
+            margin-top: 3px;
+            font-weight: 500;
+        }
+
+        /* Styling Premium Box untuk BI Notes Manager */
+        .manager-notes-container {
+            margin-top: 15px;
+            padding: 12px 16px;
+            background-color: #ffffff;
+            border-left: 4px solid #2f5597;
+            border-radius: 0 4px 4px 0;
+            box-shadow: inset 0 0 4px rgba(0,0,0,0.02);
+        }
+        
+        .manager-notes-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: #2f5597;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+        }
+
+        .manager-notes-text {
+            font-size: 12.5px;
+            color: #444444;
+            line-height: 1.5;
+            font-weight: 500;
+            text-align: justify;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar" style="display: flex; justify-content: space-between; align-items: center;">
+    <div class="nav-brand">
+        <div class="logo-circle"><i class="fas fa-map-marker-alt"></i></div>
+        <h1>MidiZone</h1>
+    </div>
+
+    <div class="nav-menu" style="display: flex; align-items: center; gap: 15px;">
+        <a href="{% url 'dashboard' %}" class="nav-link">Dashboard</a>
+        <a href="{% url 'input_lokasi' %}" class="nav-link active">Input Titik</a>
+        <a href="{% url 'riwayat' %}" class="nav-link">Riwayat</a>
+
+        <div class="user-profile" style="display: flex; align-items: center; gap: 12px; border-left: 1px solid #ccc; padding-left: 15px; margin-left: 10px; height: 25px;">            <span style="font-size: 14px; font-weight: bold; color: #555; display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-user-circle" style="font-size: 20px;"></i> 
+                {% if request.user.first_name %}
+                    {{ request.user.first_name|upper }}
+                {% else %}
+                    {{ request.user.username|cut:"@gmail.com"|cut:"@yahoo.com"|upper }}
+                {% endif %}
+            </span>
+        </div>
+            <form action="{% url 'logout' %}" method="post" style="margin: 0;">
+                {% csrf_token %}
+                <button type="submit" style="background-color: #dc3545; color: white; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                    Logout
+                </button>
+            </form>
+
+    </div>
+</nav>
+
+    <main class="container">
+        <div class="input-card">
+            <div class="tab-wrapper">
+                <button class="tab-btn active" id="btn-koord" onclick="attemptSwitchTab('koordinat')">Ketik Koordinat</button>
+                <button class="tab-btn" id="btn-peta" onclick="attemptSwitchTab('peta')">Pilih di Peta</button>
+            </div>
+
+            <div id="content-koordinat">
+                <h3>Titik Koordinat</h3>
+                <div class="form-group">
+                    <form method="GET" action="{% url 'input_lokasi' %}" onsubmit="handleSearchIntersept(event, 'btn-search-manual', 'input-koordinat');">
+                        <input type="hidden" name="source" value="manual">
+                        <div class="input-field-wrapper">
+                            <input 
+                                type="text"
+                                id="input-koordinat"
+                                name="koordinat"
+                                placeholder="Input koordinat"
+                                required
+                                value="{% if source == 'manual' %}{{ koordinat }}{% endif %}"
+                                oninvalid="this.setCustomValidity('Koordinat belum diisi')"
+                                oninput="validateFormatInput(this);"
+                            >
+                            <button type="submit" class="btn btn-primary" id="btn-search-manual">Search</button>
+                        </div>
+                    </form>
+                    <p class="hint-text">Format: latitude, longitude (e.g., -6.2081, 106.8227)</p>
+                </div>
+
+                {% if koordinat and latitude != '-' %}
+                <div id="hasil-koord" class="hasil-container" style="display:block;">
+                {% else %}
+                <div id="hasil-koord" class="hasil-container" style="display:none;">
+                {% endif %}
+                    
+                    <div class="map-analysis" style="background: none; border: none; padding: 0; height: auto;">
+                        {% if koordinat and source == 'manual' %}
+                            <div id="map-visual-manual" style="height: 380px; width: 100%; border-radius: 4px; border: 1px solid #dcdcdc; margin-bottom: 10px;"></div>
+                        {% else %}
+                            <div style="background: #fafafa; border: 1px dashed #dcdcdc; padding: 40px; text-align: center; border-radius: 4px;">
+                                <i class="fas fa-draw-polygon analysis-icon" style="font-size: 32px; color: #0056b3; margin-bottom: 10px;"></i>
+                                <p class="analysis-title" style="font-weight: 600; margin: 0;">Visualisasi Area Potensial (Ketik)</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="grid-info"> 
+                        <div class="info-card">
+                            <h4><i class="fas fa-info-circle"></i> Master Data Lokasi</h4>
+                            <div class="data-row"><span class="label-data">Titik Koordinat</span><span class="value-data" style="color: #0056b3;">{{ latitude|default:"-" }}, {{ longitude|default:"-" }}</span></div>
+                            <div class="data-row"><span class="label-data">Provinsi, Kota</span><span class="value-data">{{ provinsi_kota|default:"-, -" }}</span></div>
+                            <div class="data-row"><span class="label-data">Nama Jalan</span><span class="value-data">{{ nama_jalan|default:"-" }}</span></div>
+                            <div class="data-row"><span class="label-data">Deskripsi Rute Jalan</span><span class="value-data" style="font-weight: 500; font-style: italic; color: #444;">{{ road_types_desc }}</span></div>
+                            <div class="data-row"><span class="label-data">Intersection Count</span><span class="value-data">{{ intersection_count }} titik</span></div>
+                        </div>
+
+                        <div class="info-card">
+                            <h4><i class="fas fa-users"></i> Analisis Demografi & Populasi</h4>
+                            <div class="data-row"><span class="label-data">Kepadatan Penduduk (2020)</span><span class="value-data">{{ population_density_2020|default:"-" }} jiwa/km²</span></div>
+                            <div class="data-row"><span class="label-data">Total Populasi (2020)</span><span class="value-data">{{ population_2020|default:"-" }} jiwa</span></div>
+                            <div class="data-row"><span class="label-data">Proyeksi Penduduk (2026)</span><span class="value-data" style="color: #007bff;">{{ population_2026|default:"-" }} jiwa</span></div>
+                            <div class="data-row"><span class="label-data">Kategori Kepadatan</span><span class="value-data" style="text-transform: uppercase;">{{ population_category|default:"-" }}</span></div>
+                        </div>
+
+                        <div class="info-card">
+                            <h4><i class="fas fa-utensils"></i> Ringkasan Point of Interest (POI)</h4>
+                            <div class="data-row">
+                                <span class="label-data">Restaurant / Cafe</span>
+                                <span class="value-data">
+                                    {{ poi_data.restaurant.count|default:"0" }} unit
+                                    {% if poi_data.restaurant.capped == 1 %}<span class="small-caption"><i class="fas fa-exclamation-triangle"></i> Restaurant lebih dari 20</span>{% endif %}
+                                </span>
+                            </div>
+                            <div class="data-row">
+                                <span class="label-data">Sekolah / Kampus</span>
+                                <span class="value-data">
+                                    {{ poi_data.school.count|default:"0" }} unit
+                                    {% if poi_data.school.capped == 1 %}<span class="small-caption"><i class="fas fa-exclamation-triangle"></i> Sekolah lebih dari 20</span>{% endif %}
+                                </span>
+                            </div>
+                            <div class="data-row">
+                                <span class="label-data">Bank / Fasilitas ATM</span>
+                                <span class="value-data">
+                                    {{ poi_data.bank.count|default:"0" }} unit
+                                    {% if poi_data.bank.capped == 1 %}<span class="small-caption"><i class="fas fa-exclamation-triangle"></i> Bank/ATM lebih dari 20</span>{% endif %}
+                                </span>
+                            </div>
+                            <div class="data-row">
+                                <span class="label-data">Rumah Sakit / Hospital</span>
+                                <span class="value-data">
+                                    {{ poi_data.hospital.count|default:"0" }} unit
+                                    {% if poi_data.hospital.capped == 1 %}<span class="small-caption"><i class="fas fa-exclamation-triangle"></i> RS/Hospital lebih dari 20</span>{% endif %}
+                                </span>
+                            </div>
+                            <hr>
+                            <div class="data-row"><span><strong>Total POI Terdeteksi</strong></span><span><strong style="font-size: 15px; color: #0056b3;">{{ summary_data.total_poi|default:"0" }}</strong></span></div>
+                        </div>
+
+                        <div class="info-card">
+                            <h4><i class="fas fa-store-alt"></i> Analisis Pasar & Kompetitor Ritel</h4>
+                            <div class="data-row"><span class="label-data">Supermarket</span><span class="value-data">{{ competitor_data.supermarket_count|default:"0" }} unit</span></div>
+                            <div class="data-row"><span class="label-data">Minimarket Kompetitor</span><span class="value-data">{{ competitor_data.other_minimarket_count|default:"0" }} unit</span></div>
+                            <div class="data-row"><span class="label-data">Internal (Alfamidi)</span><span class="value-data" style="color: #e65100;">{{ competitor_data.alfamidi_count|default:"0" }} unit</span></div>
+                            <hr>
+                            <div class="data-row"><span><strong>Total Akumulasi Kompetitor</strong></span><span><strong style="font-size: 15px; color: #c62828;">{{ competitor_data.total_competitor|default:"0" }}</strong></span></div>
+                        </div>
+
+                        <div class="info-card info-card-blue" style="grid-column: span 2;">
+                            <h4><i class="fas fa-brain"></i> Decision Support System (DSS) Analysis & Traffic Evaluation</h4>
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+                                <div>
+                                    <div class="data-row"><span class="label-data">Status Kelayakan Proyek</span><span class="value-data status-layak" style="color: #2e7d32; font-size: 14px;">{{ status_kelayakan|default:"LAYAK" }}</span></div>
+                                    <div class="data-row"><span class="label-data">Model Confidence Score</span><span class="value-data" style="font-size: 14px;">{{ confidence_score|default:"87" }}%</span></div>
+                                </div>
+                                <div>
+                                    <div class="data-row"><span class="label-data">Klaster Geografis Wilayah ML</span><span class="value-data" style="text-transform: uppercase;">{{ wilayah_ml|default:"-" }}</span></div>
+                                    <div class="data-row">
+                                        <span class="label-data">Volume Traffic Estimation</span>
+                                        <span class="value-data">
+                                            {% if category_ml == 'High' %}<span style="color: #c62828; padding: 2px 8px; background: #ffebee; border-radius: 3px; font-weight: bold;">High</span>
+                                            {% elif category_ml == 'Medium' %}<span style="color: #f57f17; padding: 2px 8px; background: #fffde7; border-radius: 3px; font-weight: bold;">Medium</span>
+                                            {% else %}<span style="color: #37474f; padding: 2px 8px; background: #eceff1; border-radius: 3px; font-weight: bold;">Low</span>{% endif %}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="manager-notes-container">
+                                <div class="manager-notes-title"><i class="fas fa-comment-alt"></i> Analisis DSS</div>
+                                <p class="manager-notes-text">{{ catatan_manager }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="action-panel-manual" class="action-wrapper" style="display: flex; margin-top: 20px;">
+                        <button type="button" class="btn btn-secondary" onclick="resetView()">Batal</button>
+                        <button type="button" class="btn btn-primary" onclick="eksekusiSimpanDatabase('action-panel-manual')">Simpan Data</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="content-peta" style="display: none;">
+                <div class="map-card full-map-card" style="margin-bottom: 20px; margin-top: 15px;">
+                    <div id="map" style="height: 350px; width: 100%; border-radius: 4px; border: 1px solid #dcdcdc;"></div>
+                </div>
+
+                <h3>Titik Koordinat yang di Pilih</h3>
+                <div class="form-group">
+                    <form method="GET" action="{% url 'input_lokasi' %}" onsubmit="handleSearchIntersept(event, 'btn-search-peta', 'coord-output');">
+                        <input type="hidden" name="source" value="map">
+                        <div class="input-field-wrapper">
+                            <input type="text" id="coord-output" name="koordinat" readonly placeholder="Klik pada peta untuk koordinat" required
+                                value="{% if source == 'map' %}{{ koordinat }}{% endif %}"
+                                oninvalid="this.setCustomValidity('Lokasi belum dipilih')">
+                            <button type="submit" class="btn btn-primary" id="btn-search-peta">Search</button>
+                        </div>
+                    </form>
+                </div>
+
+                {% if koordinat and latitude != '-' %}
+                <div id="hasil-peta" class="hasil-container" style="display:block;">
+                {% else %}
+                <div id="hasil-peta" class="hasil-container" style="display:none;">
+                {% endif %}
+                    
+                    <div class="map-analysis" style="background: none; border: none; padding: 0; height: auto;">
+                        {% if koordinat and source == 'map' %}
+                            <div id="map-visual-peta" style="height: 380px; width: 100%; border-radius: 4px; border: 1px solid #dcdcdc; margin-bottom: 10px;"></div>
+                        {% endif %}
+                    </div>
+
+                    <div class="grid-info">
+                        <div class="info-card">
+                            <h4><i class="fas fa-info-circle"></i> Master Data Lokasi</h4>
+                            <div class="data-row"><span class="label-data">Titik Koordinat</span><span class="value-data" style="color: #0056b3;">{{ latitude|default:"-" }}, {{ longitude|default:"-" }}</span></div>
+                            <div class="data-row"><span class="label-data">Provinsi, Kota</span><span class="value-data">{{ provinsi_kota|default:"-, -" }}</span></div>
+                            <div class="data-row"><span class="label-data">Nama Jalan</span><span class="value-data">{{ nama_jalan|default:"-" }}</span></div>
+                            <div class="data-row"><span class="label-data">Deskripsi Rute Jalan</span><span class="value-data" style="font-weight: 500; font-style: italic; color: #444;">{{ road_types_desc }}</span></div>
+                            <div class="data-row"><span class="label-data">Intersection Count</span><span class="value-data">{{ intersection_count }} titik</span></div>
+                        </div>
+
+                        <div class="info-card">
+                            <h4><i class="fas fa-users"></i> Analisis Demografi & Populasi</h4>
+                            <div class="data-row"><span class="label-data">Kepadatan Penduduk (2020)</span><span class="value-data">{{ population_density_2020|default:"-" }} jiwa/km²</span></div>
+                            <div class="data-row"><span class="label-data">Total Populasi (2020)</span><span class="value-data">{{ population_2020|default:"-" }} jiwa</span></div>
+                            <div class="data-row"><span class="label-data">Proyeksi Penduduk (2026)</span><span class="value-data" style="color: #007bff;">{{ population_2026|default:"-" }} jiwa</span></div>
+                            <div class="data-row"><span class="label-data">Kategori Kepadatan</span><span class="value-data" style="text-transform: uppercase;">{{ population_category|default:"-" }}</span></div>
+                        </div>
+
+                        <div class="info-card">
+                            <h4><i class="fas fa-utensils"></i> Ringkasan Point of Interest (POI)</h4>
+                            <div class="data-row">
+                                <span class="label-data">Restaurant / Cafe</span>
+                                <span class="value-data">
+                                    {{ poi_data.restaurant.count|default:"0" }} unit
+                                    {% if poi_data.restaurant.capped == 1 %}<span class="small-caption"><i class="fas fa-exclamation-triangle"></i> Restaurant lebih dari 20</span>{% endif %}
+                                </span>
+                            </div>
+                            <div class="data-row">
+                                <span class="label-data">Sekolah / Kampus</span>
+                                <span class="value-data">
+                                    {{ poi_data.school.count|default:"0" }} unit
+                                    {% if poi_data.school.capped == 1 %}<span class="small-caption"><i class="fas fa-exclamation-triangle"></i> Sekolah lebih dari 20</span>{% endif %}
+                                </span>
+                            </div>
+                            <div class="data-row">
+                                <span class="label-data">Bank / Fasilitas ATM</span>
+                                <span class="value-data">
+                                    {{ poi_data.bank.count|default:"0" }} unit
+                                    {% if poi_data.bank.capped == 1 %}<span class="small-caption"><i class="fas fa-exclamation-triangle"></i> Bank/ATM lebih dari 20</span>{% endif %}
+                                </span>
+                            </div>
+                            <div class="data-row">
+                                <span class="label-data">Rumah Sakit / Hospital</span>
+                                <span class="value-data">
+                                    {{ poi_data.hospital.count|default:"0" }} unit
+                                    {% if poi_data.hospital.capped == 1 %}<span class="small-caption"><i class="fas fa-exclamation-triangle"></i> RS/Hospital lebih dari 20</span>{% endif %}
+                                </span>
+                            </div>
+                            <hr>
+                            <div class="data-row"><span><strong>Total POI Terdeteksi</strong></span><span><strong style="font-size: 15px; color: #0056b3;">{{ summary_data.total_poi|default:"0" }}</strong></span></div>
+                        </div>
+
+                        <div class="info-card">
+                            <h4><i class="fas fa-store-alt"></i> Analisis Pasar & Kompetitor Ritel</h4>
+                            <div class="data-row"><span class="label-data">Supermarket</span><span class="value-data">{{ competitor_data.supermarket_count|default:"0" }} unit</span></div>
+                            <div class="data-row"><span class="label-data">Minimarket Kompetitor</span><span class="value-data">{{ competitor_data.other_minimarket_count|default:"0" }} unit</span></div>
+                            <div class="data-row"><span class="label-data">Internal (Alfamidi)</span><span class="value-data" style="color: #e65100;">{{ competitor_data.alfamidi_count|default:"0" }} unit</span></div>
+                            <hr>
+                            <div class="data-row"><span><strong>Total Akumulasi Kompetitor</strong></span><span><strong style="font-size: 15px; color: #c62828;">{{ competitor_data.total_competitor|default:"0" }}</strong></span></div>
+                        </div>
+
+                        <div class="info-card info-card-blue" style="grid-column: span 2;">
+                            <h4><i class="fas fa-brain"></i> Decision Support System (DSS) Analysis & Traffic Evaluation</h4>
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+                                <div>
+                                    <div class="data-row"><span class="label-data">Status Kelayakan Proyek</span><span class="value-data status-layak" style="color: #2e7d32; font-size: 14px;">{{ status_kelayakan|default:"LAYAK" }}</span></div>
+                                    <div class="data-row"><span class="label-data">Model Confidence Score</span><span class="value-data" style="font-size: 14px;">{{ confidence_score|default:"87" }}%</span></div>
+                                </div>
+                                <div>
+                                    <div class="data-row"><span class="label-data">Klaster Geografis Wilayah ML</span><span class="value-data" style="text-transform: uppercase;">{{ wilayah_ml|default:"-" }}</span></div>
+                                    <div class="data-row">
+                                        <span class="label-data">Volume Traffic Estimation</span>
+                                        <span class="value-data">
+                                            {% if category_ml == 'High' %}<span style="color: #c62828; padding: 2px 8px; background: #ffebee; border-radius: 3px; font-weight: bold;">High</span>
+                                            {% elif category_ml == 'Medium' %}<span style="color: #f57f17; padding: 2px 8px; background: #fffde7; border-radius: 3px; font-weight: bold;">Medium</span>
+                                            {% else %}<span style="color: #37474f; padding: 2px 8px; background: #eceff1; border-radius: 3px; font-weight: bold;">Low</span>{% endif %}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="manager-notes-container">
+                                <div class="manager-notes-title"><i class="fas fa-comment-alt"></i> Analisis DSS</div>
+                                <p class="manager-notes-text">{{ catatan_manager }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="action-panel-peta" class="action-wrapper" style="display: flex; margin-top: 20px;">
+                        <button type="button" class="btn btn-secondary" onclick="resetView()">Batal</button>
+                        <button type="button" class="btn btn-primary" onclick="eksekusiSimpanDatabase('action-panel-peta')">Simpan Data</button>
+                    </div>
+                </div>
+            </div>
+        </div> 
+    </main>
+
+    <div id="success-modal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 9999;">
+        <div class="modal-content" style="background: white; padding: 30px; border-radius: 8px; text-align: center; max-width: 400px; width: 90%;">
+            <h3>Data Berhasil di Simpan</h3>
+            <p class="doc-number-text" style="margin-bottom: 20px;">No. Dokumen &nbsp;:&nbsp; <span id="doc-id-placeholder" class="doc-number-blue" style="color: #0056b3; font-weight: bold;">LOCSPEC/ANL/V/2026/001</span></p>
+            <div class="modal-actions" style="display: flex; gap: 10px; justify-content: center;">
+                <button id="btn-download-pdf" class="btn btn-secondary" onclick="downloadPDF()">Unduh PDF</button>                <button class="btn btn-secondary" onclick="closeSuccessPopup()">Kembali</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="warning-modal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 9999;">
+        <div class="modal-content modal-warning-border" style="background: white; padding: 30px; border-radius: 8px; text-align: center; max-width: 400px; width: 90%; border-top: 5px solid #ffc107;">
+            <h3 class="warning-title-red" style="color: #dc3545; margin-bottom: 15px;">Peringatan!</h3>
+            <p class="warning-desc" style="margin-bottom: 20px; color: #666;">Data belum disimpan. Jika ingin pindah, data pencarian saat ini akan hilang. Lanjutkan?</p>
+            <div class="modal-actions" style="display: flex; gap: 10px; justify-content: center;">
+                <button class="btn btn-secondary" onclick="cancelSwitch()">Batal</button>
+                <button class="btn btn-primary" onclick="confirmSwitch()">Ya, Pindah</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="sap-message-bar" class="sap-status-bar">
+        <i id="sap-bar-icon" class="fas fa-check-circle"></i>
+        <span id="sap-bar-text"></span>
+    </div>
+
+    <footer class="footer">
+        <p>© 2026 PT Midi Utama Indonesia Tbk. | v1.0.0</p>
+    </footer>
+
+    <script>
+        let isResultActive = "{% if koordinat and latitude and latitude != '-' %}true{% else %}false{% endif %}" === "true";
+        let pendingTab = ''; 
+        let map;
+        let marker = null;
+        let activeActionPanelId = '';
+
+        function triggerSapStatusBar(message, type = 'success') {
+            const sapBar = document.getElementById('sap-message-bar');
+            const sapText = document.getElementById('sap-bar-text');
+            const sapIcon = document.getElementById('sap-bar-icon');
+            
+            sapText.innerText = message;
+            sapBar.style.display = 'flex';
+            sapBar.style.opacity = '1';
+            sapBar.style.transition = 'none';
+
+            if (type === 'success') {
+                sapBar.style.backgroundColor = '#e2f0d9';
+                sapBar.style.borderColor = '#a9d08e';
+                sapBar.style.color = '#385723';
+                sapIcon.className = 'fas fa-check-circle';
+                sapIcon.style.color = '#248f24';
+            } else {
+                sapBar.style.backgroundColor = '#fce4d6';
+                sapBar.style.borderColor = '#f4b084';
+                sapBar.style.color = '#c65911';
+                sapIcon.className = 'fas fa-times-circle';
+                sapIcon.style.color = '#c00000';
+            }
+
+            setTimeout(() => {
+                sapBar.style.transition = 'opacity 1s ease';
+                sapBar.style.opacity = '0';
+                setTimeout(() => { sapBar.style.display = 'none'; }, 1000);
+            }, 6000);
+        }
+
+        function eksekusiSimpanDatabase(panelId) {
+        activeActionPanelId = panelId;
+        
+        // Pastikan payload mengambil data hasil analisis terbaru dari context yang sudah dirender Django
+        const payloadData = {
+            latitude: "{{ latitude }}",
+            longitude: "{{ longitude }}",
+            address: "{{ nama_jalan }}, {{ provinsi_kota }}",
+            road_types_desc: "{{ road_types_desc }}",
+            intersection_count: "{{ intersection_count }}",
+            region: "{{ wilayah_ml }}",
+            population_density_2020: "{{ population_density_2020 }}",
+            population_2020: "{{ population_2020 }}",
+            population_2026: "{{ population_2026 }}",
+            population_category: "{{ population_category }}",
+            
+            // Pastikan key-nya sama persis dengan yang ada di views.py
+            // Pastikan ini sama dengan 'data.get("restaurant_count")' di Python
+    restaurant_count: "{{ poi_data.restaurant.count|default:0 }}",
+    school_count: "{{ poi_data.school.count|default:0 }}",
+    bank_count: "{{ poi_data.bank.count|default:0 }}",
+    hospital_count: "{{ poi_data.hospital.count|default:0 }}",
+    total_poi: "{{ summary_data.total_poi|default:0 }}",
+    
+    supermarket_count: "{{ competitor_data.supermarket_count|default:0 }}",
+    other_minimarket_count: "{{ competitor_data.other_minimarket_count|default:0 }}",
+    alfamidi_count: "{{ competitor_data.alfamidi_count|default:0 }}",
+    total_competitor: "{{ competitor_data.total_competitor|default:0 }}",
+    
+    // Pastikan status kelayakan juga terkirim
+    status_kelayakan: "{{ status_kelayakan }}",
+    confidence_score: "{{ confidence_score|default:0 }}",
+    traffic_score: "{{ traffic_score|default:0 }}",
+    category_ml: "{{ category_ml|default:'Low' }}"
+        };
+
+            fetch('/input-lokasi/simpan/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify(payloadData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // CEK DI CONSOLE: Apakah ada ID-nya?
+                    console.log("ID Diterima dari Server:", data.analysis_id); 
+                    
+                    if (data.analysis_id) {
+                        showSuccessPopup(panelId, data.analysis_id); 
+                        triggerSapStatusBar('Sukses disimpan!', 'success');
+                    } else {
+                        triggerSapStatusBar('Gagal: ID tidak ditemukan di server.', 'error');
+                    }
+                } else {
+                    triggerSapStatusBar('Gagal: ' + data.message, 'error');
+                }
+            })
+            .catch(error => {
+                triggerSapStatusBar('Gagal: Terjadi kesalahan jaringan sistem PostgreSQL.', 'error');
+            });
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        function validateFormatInput(input) {
+            input.setCustomValidity('');
+            const regex = /^-?\d+(\.\d+)?\s*,\s*-?\d+(\.\d+)?$/;
+            if (input.value.trim() && !regex.test(input.value.trim())) {
+                input.setCustomValidity('Format harus: latitude, longitude (e.g., -6.2081, 106.8227)');
+            }
+            input.reportValidity();
+        }
+
+        function handleSearchIntersept(event, buttonId, inputId) {
+            event.preventDefault();
+            const inputField = document.getElementById(inputId);
+            inputField.setCustomValidity('');
+            if (!inputField.value.trim()) {
+                inputField.setCustomValidity('Silakan isi koordinat atau pilih di peta!');
+                inputField.reportValidity();
+                return;
+            }
+            const btn = document.getElementById(buttonId);
+            btn.innerText = "Preprocessing...";
+            btn.disabled = true;
+            setTimeout(() => { event.target.submit(); }, 300);
+        }
+
+        function attemptSwitchTab(type) {
+            if (isResultActive) {
+                pendingTab = type;
+                document.getElementById('warning-modal').style.display = 'flex';
+            } else {
+                executeSwitchTab(type);
+            }
+        }
+
+        function confirmSwitch() {
+            document.getElementById('warning-modal').style.display = 'none';
+            isResultActive = false; 
+            executeSwitchTab(pendingTab);
+        }
+
+        function cancelSwitch() { document.getElementById('warning-modal').style.display = 'none'; }
+
+        function executeSwitchTab(type) {
+            const tabKoord = document.getElementById('content-koordinat');
+            const tabPeta = document.getElementById('content-peta');
+            const btnKoord = document.getElementById('btn-koord');
+            const btnPeta = document.getElementById('btn-peta');
+            
+            if(type === 'koordinat') {
+                tabKoord.style.display = 'block'; tabPeta.style.display = 'none';
+                btnKoord.classList.add('active'); btnPeta.classList.remove('active');
+            } else {
+                tabKoord.style.display = 'none'; tabPeta.style.display = 'block';
+                btnPeta.classList.add('active'); btnKoord.classList.remove('active');
+            }
+            if(map) { setTimeout(() => { map.invalidateSize(true); }, 200); }
+        }
+
+        function resetView() { window.location.href = "{% url 'input_lokasi' %}"; }
+        function showSuccessPopup(panelId, analysisId) {
+            activeActionPanelId = panelId;
+            const downloadBtn = document.getElementById('btn-download-pdf');
+                if (downloadBtn) {
+                    downloadBtn.setAttribute('data-analysis-id', analysisId);
+                }
+                
+                document.getElementById('success-modal').style.display = 'flex';
+        }
+        function closeSuccessPopup() {
+            document.getElementById('success-modal').style.display = 'none';
+            isResultActive = false;
+        }
+        function downloadPDF() {
+            const btn = document.getElementById('btn-download-pdf');
+            const analysisId = btn.getAttribute('data-analysis-id');
+            
+            if (analysisId) {
+                // Ini perintah yang akan memaksa browser mendownload file dari server
+                window.location.href = "/download-pdf/" + analysisId + "/";
+                
+                // Opsional: beritahu user
+                triggerSapStatusBar('Sedang mengunduh laporan...', 'success');
+                document.getElementById('success-modal').style.display = 'none';
+            } else {
+                triggerSapStatusBar('Error: ID Dokumen tidak ditemukan.', 'error');
+            }
+        }
+
+        // 🔥 LOGIK INTERAKTIF RENDERING GEOSPATIAL MAPS & UBER H3 INDICES
+        document.addEventListener("DOMContentLoaded", function () {
+            let initialLat = parseFloat("{{ latitude }}") || -6.2088;
+            let initialLng = parseFloat("{{ longitude }}") || 106.8456;
+            let currentSource = "{{ source }}";
+            let hasCoordinates = "{{ koordinat }}" !== "" && "{{ latitude }}" !== "-";
+
+            // 1. Inisialisasi peta dasar untuk klik manual (Tab Pilih di Peta)
+            map = L.map('map').setView([initialLat, initialLng], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+
+            if (currentSource === "map" && hasCoordinates) {
+                marker = L.marker([initialLat, initialLng]).addTo(map);
+            }
+
+            map.on('click', function(e){
+                const lat = e.latlng.lat.toFixed(6);
+                const lng = e.latlng.lng.toFixed(6);
+                document.getElementById('coord-output').value = `${lat},${lng}`;
+                document.getElementById('input-koordinat').value = `${lat},${lng}`;
+                if(marker){ map.removeLayer(marker); }
+                marker = L.marker([lat, lng]).addTo(map).bindPopup("Titik Terpilih").openPopup();
+            });
+
+            // 2. 🔥 CORE VISUALIZER: Render Heksagon Pink & Taburan POI pada Kotak Hasil Pencarian
+            if (hasCoordinates) {
+                let visualMapId = (currentSource === 'map') ? 'map-visual-peta' : 'map-visual-manual';
+                let visualContainer = document.getElementById(visualMapId);
+                
+                if (visualContainer) {
+                    let visualMap = L.map(visualMapId).setView([initialLat, initialLng], 14);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '&copy; OpenStreetMap contributors'
+                    }).addTo(visualMap);
+
+                    // Pasang Pin Marker Kandidat Utama Toko Alfamidi
+                    L.marker([initialLat, initialLng]).addTo(visualMap)
+                        .bindPopup("<b>Kandidat Toko Alfamidi</b><br>{{ nama_jalan }}").openPopup();
+
+                    // 🔥 DRAW SEGI-ENAM HEKSAGON H3
+                    let h3Coords = {% if h3_polygon_json %}{{ h3_polygon_json|safe }}{% else %}[]{% endif %};
+                    if (h3Coords && h3Coords.length > 0) {
+                        let h3Polygon = L.polygon(h3Coords, {
+                            color: '#e91e63',       // Garis batas luar Pink Pekat
+                            fillColor: '#ff4081',   // Isi bidang dalam Heksagon
+                            fillOpacity: 0.45,      // Transparansi pas sesuai contoh gambarmu
+                            weight: 3.5             // Ketebalan garis sudut heksagon
+                        }).addTo(visualMap);
+                        
+                        // Kamera otomatis mengunci dan auto-zoom ke area heksagon H3
+                        visualMap.fitBounds(h3Polygon.getBounds());
+                    }
+
+                    // 🔥 PLOT SEBARAN BULATAN TITIK POI DATA LIVE DARI PIPELINE KODE SATU
+                    let poiMarkers = {% if poi_markers_json %}{{ poi_markers_json|safe }}{% else %}[]{% endif %};
+                    poiMarkers.forEach(function(poi) {
+                        let styleOptions = { radius: 6, weight: 1, fillOpacity: 0.85, color: '#ffffff' };
+                        
+                        // Menentukan warna bulatan POI berdasarkan kategori klaster data
+                        if (poi.type === 'school') { styleOptions.fillColor = '#1e88e5'; }      // Biru
+                        else if (poi.type === 'bank') { styleOptions.fillColor = '#43a047'; }    // Hijau
+                        else if (poi.type === 'hospital') { styleOptions.fillColor = '#e53935'; }// Merah RS
+                        else if (poi.type === 'alfamidi') { styleOptions.fillColor = '#fb8c00'; }// Oranye Midi
+                        else { styleOptions.fillColor = '#8e24aa'; }                             // Ungu Restoran
+
+                        L.circleMarker([poi.lat, poi.lng], styleOptions)
+                            .addTo(visualMap)
+                            .bindPopup(`<b>${poi.name}</b><br>Kategori: <span style='text-transform:uppercase;'>${poi.type}</span>`);
+                    });
+
+                    // Cegah peta glitch/terpotong saat pertama kali dimuat di container dinamis
+                    setTimeout(() => { visualMap.invalidateSize(true); }, 300);
+                }
+            }
+        });
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            const sourceParam = urlParams.get('source');
+            const koordParam = urlParams.get('koordinat');
+
+            if (koordParam) {
+                if (sourceParam === 'map') { executeSwitchTab('peta'); } 
+                else { executeSwitchTab('koordinat'); }
+                setTimeout(() => {
+                    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+                }, 400);
+            }
+        });
+    </script>
+</body>
+</html>
