@@ -7,6 +7,68 @@
     <title>MidiZone - Dashboard</title>
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .dashboard-summary{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:20px;
+    margin:20px 0;
+}
+
+.summary-box{
+    background:#fff;
+    padding:20px;
+    border-radius:10px;
+    box-shadow:0 2px 8px rgba(0,0,0,.08);
+}
+
+.summary-title{
+    font-size:13px;
+    color:#64748b;
+    font-weight:600;
+}
+
+.summary-value{
+    font-size:32px;
+    font-weight:700;
+    margin-top:10px;
+}
+
+.success{
+    color:#2e7d32;
+}
+
+.danger{
+    color:#dc3545;
+}
+
+.dashboard-chart{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+    margin-bottom:20px;
+}
+
+.chart-card{
+    background:#fff;
+    border-radius:10px;
+    padding:20px;
+    box-shadow:0 2px 8px rgba(0,0,0,.08);
+}
+
+.table-card{
+    background:#fff;
+    border-radius:10px;
+    padding:20px;
+    box-shadow:0 2px 8px rgba(0,0,0,.08);
+}
+
+#pieChart,
+#barChart{
+    height:300px !important;
+}
+</style>
 </head>
 <body>
 
@@ -47,19 +109,102 @@
                 <i class="fas fa-history"></i> Lihat Riwayat
             </a>
         </div>
+        <div class="dashboard-summary">
 
-        <div class="map-card">
-            <div class="map-placeholder">
-                <i class="fas fa-map-marked-alt"></i>
-                <p class="map-title">Area Peta Interaktif</p>
-                <p class="map-subtitle">Google Maps API akan diintegrasikan di sini</p>
-            </div>
+    <div class="summary-box">
+        <div class="summary-title">Total Analisis</div>
+        <div class="summary-value">{{ total_analisis }}</div>
+    </div>
+
+    <div class="summary-box">
+        <div class="summary-title">Lokasi Layak</div>
+        <div class="summary-value success">
+            {{ total_layak }}
         </div>
+    </div>
+
+    <div class="summary-box">
+        <div class="summary-title">Lokasi Tidak Layak</div>
+        <div class="summary-value danger">
+            {{ total_tidak_layak }}
+        </div>
+    </div>
+
+    <div class="summary-box">
+        <div class="summary-title">Confidence Rata-rata</div>
+        <div class="summary-value">
+            {{ avg_confidence }}%
+        </div>
+    </div>
+
+</div>
+<div class="dashboard-chart">
+
+    <div class="chart-card">
+        <h3>Layak vs Tidak Layak</h3>
+
+<canvas id="pieChart" height="300"></canvas>
+    </div>
+
+    <div class="chart-card">
+        <h3>Top 5 Lokasi Terbaik</h3>
+
+<canvas id="barChart" height="300"></canvas>
+    </div>
+
+</div>
+
     </main>
 
     <footer class="footer">
         <p>&copy; 2026 PT Midi Utama Indonesia Tbk. | v1.0.0</p>
     </footer>
+
+    <script>
+
+const pieCtx = document.getElementById('pieChart');
+
+if (pieCtx) {
+    new Chart(pieCtx, {
+        type: 'pie',
+        data: {
+            labels: ['Layak', 'Tidak Layak'],
+            datasets: [{
+                data: [
+                    {{ total_layak|default:0 }},
+                    {{ total_tidak_layak|default:0 }}
+                ]
+            }]
+        }
+    });
+}
+
+
+const barCtx = document.getElementById('barChart');
+
+if (barCtx) {
+    new Chart(barCtx, {
+        type: 'bar',
+        data: {
+            labels: [
+                {% for item in top_locations %}
+                "Lokasi {{ forloop.counter }}",
+                {% endfor %}
+            ],
+            datasets: [{
+                label: 'Confidence',
+                data: [
+                    {% for item in top_locations %}
+                        {{ item.confidence_score }},
+                    {% endfor %}
+                ]
+            }]
+        }
+    });
+}
+
+
+</script>
 
 </body>
 </html>

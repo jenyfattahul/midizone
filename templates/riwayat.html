@@ -7,168 +7,256 @@
     <title>Location Potential Analysis - Riwayat</title>
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .table-container { max-height: 500px; overflow-y: auto; border: 1px solid #ddd; margin-top: 10px; position: relative; }
+        .data-table { width: 100%; border-collapse: collapse; }
+        .data-table thead th { position: sticky; top: 0; background: #0056b3; color: white; padding: 12px; z-index: 10; text-align: left; white-space: nowrap; }
+        .sortable { cursor: pointer; }
+        .sortable:hover { background: #004494; }
+        .data-table tbody tr:nth-child(even) { background-color: #f9f9f9; }
+        .data-table tbody tr:hover { background-color: #f1f7ff; }
+        .data-table td { padding: 12px; border-bottom: 1px solid #eee; white-space: nowrap; }
+        
+        .table-toolbar { padding: 12px; background: #eef2f7; display: flex; visibility: hidden; height: 45px; align-items: center; gap: 15px; border-radius: 8px 8px 0 0; border: 1px solid #ddd; border-bottom: none; }
+        .table-toolbar.active { visibility: visible; }
+        
+        .btn-action { padding: 8px 16px; cursor: pointer; border: 1px solid #ccc; border-radius: 4px; background: white; font-size: 13px; font-weight: 500; transition: 0.2s; }
+        .btn-action:hover { background: #f0f0f0; }
+        .text-danger { color: #dc3545; }
+        .clickable-doc { cursor: pointer; color: #0056b3; text-decoration: underline; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal.show { display: flex; }
+        .modal-content { background: white; padding: 25px; border-radius: 8px; width: 800px; max-width: 95%; }
+        
+        .filter-panel { background: #f9f9f9; padding: 15px; border: 1px solid #ddd; border-radius: 8px; margin-top: 10px; display: none; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        .filter-panel.show { display: grid; }
+    </style>
 </head>
 <body>
     <nav class="navbar" style="display: flex; justify-content: space-between; align-items: center;">
-    <div class="nav-brand">
-        <div class="logo-circle"><i class="fas fa-map-marker-alt"></i></div>
-        <h1>MidiZone</h1>
-    </div>
-
-    <div class="nav-menu" style="display: flex; align-items: center; gap: 15px;">
-        <a href="{% url 'dashboard' %}" class="nav-link">Dashboard</a>
-        <a href="{% url 'input_lokasi' %}" class="nav-link">Input Titik</a>
-        <a href="{% url 'riwayat' %}" class="nav-link active">Riwayat</a>
-        <div class="user-profile" style="display: flex; align-items: center; gap: 12px; border-left: 1px solid #ccc; padding-left: 15px; margin-left: 10px; height: 25px;">            <span style="font-size: 14px; font-weight: bold; color: #555; display: flex; align-items: center; gap: 8px;">
-                <i class="fas fa-user-circle" style="font-size: 20px;"></i> 
-                {% if request.user.first_name %}
-                    {{ request.user.first_name|upper }}
-                {% else %}
-                    {{ request.user.username|cut:"@gmail.com"|cut:"@yahoo.com"|upper }}
-                {% endif %}
-            </span>
+        <div class="nav-brand">
+            <div class="logo-circle"><i class="fas fa-map-marker-alt"></i></div>
+            <h1>MidiZone</h1>
         </div>
+        <div class="nav-menu" style="display: flex; align-items: center; gap: 15px;">
+            <a href="{% url 'dashboard' %}" class="nav-link">Dashboard</a>
+            <a href="{% url 'input_lokasi' %}" class="nav-link">Input Titik</a>
+            <a href="{% url 'riwayat' %}" class="nav-link active">Riwayat</a>
+            <div class="user-profile" style="display: flex; align-items: center; gap: 12px; border-left: 1px solid #ccc; padding-left: 15px; margin-left: 10px; height: 25px;">
+                <span style="font-size: 14px; font-weight: bold; color: #555; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-user-circle" style="font-size: 20px;"></i> 
+                    {% if request.user.first_name %}{{ request.user.first_name|upper }}{% else %}{{ request.user.username|cut:"@gmail.com"|cut:"@yahoo.com"|upper }}{% endif %}
+                </span>
+            </div>
             <form action="{% url 'logout' %}" method="post" style="margin: 0;">
                 {% csrf_token %}
-                <button type="submit" style="background-color: #dc3545; color: white; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 12px;">
-                    Logout
-                </button>
+                <button type="submit" style="background-color: #dc3545; color: white; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 12px;">Logout</button>
             </form>
-
-    </div>
-</nav>
+        </div>
+    </nav>
 
     <main class="container">
         <div class="filter-card">
-            <h2>Riwayat</h2>
-            <div class="filter-grid">
-                <div class="filter-group">
-                    <label>Koordinat</label>
-                    <input type="text" placeholder="e.g., -6.2081">
-                </div>
-                <div class="filter-group">
-                    <label>Status</label>
-                    <select><option>Semua Status</option></select>
-                </div>
-                <div class="filter-group">
-                    <label>Tanggal</label>
-                    <select><option>Semua Rentang</option></select>
-                </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2>Riwayat</h2>
+                <button class="btn-action" onclick="document.getElementById('advFilter').classList.toggle('show')"><i class="fas fa-filter"></i></button>
+            </div>
+            <div class="filter-grid" style="display: flex; gap: 15px; margin-top: 15px;">
+                <div class="filter-group" style="flex: 1;"><label>Search</label><input type="text" id="searchInput" placeholder="" onkeyup="filterTable()" style="padding: 8px; width: 100%;"></div>
+            </div>
+            <div id="advFilter" class="filter-panel">
+                <div class="filter-group"><label>Dokumen</label><input type="text" id="filterDoc" placeholder="" onkeyup="filterTable()" style="padding: 8px; width: 100%;"></div>
+                <div class="filter-group"><label>Tanggal</label><input type="text" id="filterDate" placeholder="" onkeyup="filterTable()" style="padding: 8px; width: 100%;"></div>
+                <div class="filter-group"><label>Alamat</label><input type="text" id="filterAddr" placeholder="" onkeyup="filterTable()" style="padding: 8px; width: 100%;"></div>
+                <div class="filter-group"><label>Koordinat</label><input type="text" id="filterCoord" placeholder="" onkeyup="filterTable()" style="padding: 8px; width: 100%;"></div>
+                <div class="filter-group"><label>Region</label><input type="text" id="filterRegion" placeholder="" onkeyup="filterTable()" style="padding: 8px; width: 100%;"></div>
+                <div class="filter-group"><label>Status</label><input type="text" id="filterStatus" placeholder="" onkeyup="filterTable()" style="padding: 8px; width: 100%;"></div>
             </div>
         </div>
 
         <div class="table-card">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>No. Dokumen</th>
-                        <th>Tanggal</th>
-                        <th>Alamat / Lokasi</th>
-                        <th>Koordinat</th>
-                        <th>Region</th>
-                        <th style="text-align: center;">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-    {% for item in riwayat_list %}
-    <tr id="item-{{ item.analysis_id }}">
-        <td class="doc-id">{{ item.nomor_dokumen }}</td>
-        <td>{{ item.input_date|date:"d M Y" }}</td>
-        <td>{{ item.location.address }}</td>
-        <td>{{ item.location.latitude }}, {{ item.location.longitude }}</td>
-        <td>{{ item.region }}</td>
-        <td style="text-align: center; position: relative;">
-            <div class="history-action">
-                <button class="btn-dots" onclick="toggleMenu(event, 'm{{ item.analysis_id }}')">
-                    <i class="fas fa-ellipsis-v"></i>
-                </button>
-                <div id="m{{ item.analysis_id }}" class="dropdown-menu">
-                    <a href="javascript:void(0)" onclick="openDetailModal({{ item.analysis_id }})">
-    <i class="fas fa-info-circle"></i> Detail
-</a>
-                    <a href="{% url 'generate_pdf' item.analysis_id %}" target="_blank">
-                        <i class="fas fa-file-pdf"></i> Unduh PDF
-                    </a>
-                    <a href="#" class="delete-link" onclick="openModal('{{ item.nomor_dokumen }}', 'item-{{ item.analysis_id }}', {{ item.analysis_id }})">
-                        <i class="fas fa-trash-alt"></i> Hapus
-                    </a>
-                </div>
+            <div class="table-toolbar" id="bulkToolbar">
+                <span id="selectedCount" style="font-size: 13px; font-weight: bold; color: #333;">0 baris dipilih</span>
+                <button class="btn-action" onclick="clearSelection()">Unselect All</button>
+                <button class="btn-action" onclick="bulkAction('pdf')"><i class="fas fa-file-pdf"></i> Download PDF</button>
+                <button class="btn-action text-danger" onclick="document.getElementById('deleteModal').classList.add('show')"><i class="fas fa-trash-alt"></i> Hapus Terpilih</button>
             </div>
-        </td>
-    </tr>
-    {% empty %}
-    <tr>
-        <td colspan="6" style="text-align:center;">Belum ada riwayat analisis.</td>
-    </tr>
-    {% endfor %}
-</tbody>
-            </table>
+            <div class="table-container">
+                <table class="data-table" id="riwayatTable" data-dir="asc">
+                    <thead>
+                        <tr>
+                            <th style="width: 40px;"><input type="checkbox" id="selectAll" onclick="toggleSelectAll(this)"></th>
+                            <th class="sortable" onclick="sortTable(1)">No. Dokumen <i class="fas fa-sort"></i></th>
+                            <th>Tanggal</th>
+                            <th>Alamat / Lokasi</th>
+                            <th>Koordinat</th>
+                            <th>Region</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        {% for item in riwayat_list %}
+                        <tr id="item-{{ item.analysis_id }}">
+                            <td><input type="checkbox" class="row-checkbox" value="{{ item.analysis_id }}" onchange="updateToolbar()"></td>
+                            <td class="doc-id clickable-doc col-doc" onclick="openDetailModal({{ item.analysis_id }})">{{ item.nomor_dokumen }}</td>
+                            <td class="col-date">{{ item.input_date|date:"Y-m-d" }}</td>
+                            <td class="col-addr">{{ item.location.get_formatted_address }}</td>
+                            <td class="col-coord">{{ item.location.latitude }}, {{ item.location.longitude }}</td>
+                            <td class="col-region">{{ item.region }}</td>
+                            <td class="col-status">{{ item.results.first.feasibility_prediction|default:"-" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="7" style="text-align:center;">Belum ada riwayat analisis.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </main>
 
     <div id="deleteModal" class="modal">
         <div class="modal-content">
-            <h3>Yakin ingin menghapus?</h3>
-            <p>Data tidak bisa dikembalikan</p>
-            <div class="modal-buttons">
-                <button class="btn btn-secondary" onclick="closeModal()">Batal</button>
-                <button class="btn btn-hapus" onclick="confirmDelete()">Hapus</button>
+            <h3>Konfirmasi Hapus</h3>
+            <p>Data yang dipilih akan dihapus permanen.</p>
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button class="btn-action" onclick="document.getElementById('deleteModal').classList.remove('show')">Batal</button>
+                <button class="btn-action text-danger" onclick="confirmDelete()">Hapus Permanen</button>
             </div>
         </div>
     </div>
 
-<div id="detailModal" class="modal">
-    <div class="modal-content" style="max-width: 800px; width: 95%;">
-        <h3 style="border-bottom: 2px solid #0056b3; color: #0056b3;">
-            <i class="fas fa-info-circle"></i> Detail Analisis
-        </h3>
-        <div id="detailBody" style="margin: 20px 0;">
-            </div>
-        <div class="modal-buttons">
-            <button class="btn btn-secondary" onclick="closeDetailModal()">Tutup</button>
+    <div id="detailModal" class="modal">
+        <div class="modal-content">
+            <h3 style="border-bottom: 2px solid #0056b3; color: #0056b3;"><i class="fas fa-info-circle"></i> Detail Analisis</h3>
+            <div id="detailBody" style="margin: 20px 0;">Memuat...</div>
+            <button class="btn-action" onclick="document.getElementById('detailModal').classList.remove('show')">Tutup</button>
         </div>
     </div>
-</div>
 
-
-    <footer class="footer">
-        <p>&copy; 2026 PT Midi Utama Indonesia Tbk. | v1.0.0</p>
-    </footer>
+    <footer class="footer"><p>&copy; 2026 PT Midi Utama Indonesia Tbk. | v1.0.0</p></footer>
 
     <script>
-        let selectedItemId = '';
-        function toggleMenu(e, id) {
-            e.stopPropagation();
-            document.querySelectorAll('.dropdown-menu').forEach(m => { if(m.id !== id) m.classList.remove('show'); });
-            document.getElementById(id).classList.toggle('show');
-        }
-        window.onclick = () => document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
-        function closeModal() {
-            document.getElementById('deleteModal').classList.remove('show');
-        }
-        function confirmDelete() {
-            if(selectedItemId) { document.getElementById(selectedItemId).style.display = 'none'; }
-            closeModal();
-        }
-        function triggerDownload(docId) {
-            document.getElementById('displayDocId').innerText = docId;
-            document.getElementById('downloadModal').classList.add('show');
-        }
-        function openDetailModal(analysisId) {
-    // 1. Fetch data detail ke endpoint (kita buat nanti)
-    fetch(`/detail-riwayat/${analysisId}/`)
-        .then(response => response.text())
-        .then(html => {
-            // 2. Masukkan hasil render HTML ke dalam modal
-            document.getElementById('detailBody').innerHTML = html;
-            // 3. Tampilkan modal
-            document.getElementById('detailModal').classList.add('show');
-        });
-}
+        let isDragging = false;
+        let startState = null;
+        const tbody = document.getElementById('tableBody');
+        const selectAll = document.getElementById('selectAll');
+        const bulkToolbar = document.getElementById('bulkToolbar');
 
-function closeDetailModal() {
-    document.getElementById('detailModal').classList.remove('show');
-}
+        tbody.addEventListener('mousedown', (e) => {
+            if (e.target.type === 'checkbox' || e.target.classList.contains('clickable-doc')) return;
+            const row = e.target.closest('tr');
+            if (!row) return;
+            isDragging = true;
+            const cb = row.querySelector('.row-checkbox');
+            if(cb) {
+                startState = !cb.checked;
+                cb.checked = startState;
+                updateToolbar();
+            }
+        });
+
+        tbody.addEventListener('mouseover', (e) => {
+            if (!isDragging) return;
+            const row = e.target.closest('tr');
+            if (row) {
+                const cb = row.querySelector('.row-checkbox');
+                if(cb) {
+                    cb.checked = startState;
+                    updateToolbar();
+                }
+            }
+        });
+
+        document.addEventListener('mouseup', () => isDragging = false);
+
+        function clearSelection() {
+            document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = false);
+            selectAll.checked = false;
+            updateToolbar();
+        }
+
+        function filterTable() {
+            const filters = {
+                search: document.getElementById("searchInput").value.toLowerCase(),
+                doc: document.getElementById("filterDoc").value.toLowerCase(),
+                date: document.getElementById("filterDate").value.toLowerCase(),
+                addr: document.getElementById("filterAddr").value.toLowerCase(),
+                coord: document.getElementById("filterCoord").value.toLowerCase(),
+                region: document.getElementById("filterRegion").value.toLowerCase(),
+                status: document.getElementById("filterStatus").value.toLowerCase()
+            };
+            document.querySelectorAll("#tableBody tr").forEach(row => {
+                let text = row.innerText.toLowerCase();
+                let match = text.includes(filters.search) &&
+                            row.querySelector('.col-doc')?.innerText.toLowerCase().includes(filters.doc) &&
+                            row.querySelector('.col-date')?.innerText.toLowerCase().includes(filters.date) &&
+                            row.querySelector('.col-addr')?.innerText.toLowerCase().includes(filters.addr) &&
+                            row.querySelector('.col-coord')?.innerText.toLowerCase().includes(filters.coord) &&
+                            row.querySelector('.col-region')?.innerText.toLowerCase().includes(filters.region) &&
+                            row.querySelector('.col-status')?.innerText.toLowerCase().includes(filters.status);
+                row.style.display = match ? "" : "none";
+            });
+        }
+
+        function toggleSelectAll(source) {
+            document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = source.checked);
+            updateToolbar();
+        }
+
+        function updateToolbar() {
+            const allCheckboxes = document.querySelectorAll('.row-checkbox');
+            const checked = document.querySelectorAll('.row-checkbox:checked');
+            if (checked.length > 0) bulkToolbar.classList.add('active');
+            else bulkToolbar.classList.remove('active');
+            document.getElementById('selectedCount').innerText = `${checked.length} baris dipilih`;
+            selectAll.checked = (checked.length === allCheckboxes.length && allCheckboxes.length > 0);
+        }
+
+        function sortTable(n) {
+            if (n !== 1) return;
+            const table = document.getElementById("riwayatTable");
+            const tbody = document.getElementById('tableBody');
+            let rows = Array.from(tbody.querySelectorAll('tr'));
+            let dir = (table.dataset.dir === "asc") ? "desc" : "asc";
+            table.dataset.dir = dir;
+            rows.sort((a, b) => {
+                let x = a.cells[n].innerText.toLowerCase();
+                let y = b.cells[n].innerText.toLowerCase();
+                return dir === "asc" ? x.localeCompare(y) : y.localeCompare(x);
+            });
+            rows.forEach(row => tbody.appendChild(row));
+        }
+
+        async function confirmDelete() {
+            const ids = Array.from(document.querySelectorAll('.row-checkbox:checked')).map(cb => cb.value);
+            const response = await fetch('{% url "hapus_riwayat_batch" %}', {
+                method: 'POST',
+                headers: {'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json'},
+                body: JSON.stringify({ids: ids})
+            });
+            if (response.ok) {
+                ids.forEach(id => document.getElementById('item-' + id).remove());
+                document.getElementById('deleteModal').classList.remove('show');
+                updateToolbar();
+            }
+        }
+
+        function bulkAction(type) {
+            const ids = Array.from(document.querySelectorAll('.row-checkbox:checked')).map(cb => cb.value);
+            if(type === 'pdf') window.location.href = "{% url 'download_pdf_bulk' %}?ids=" + ids.join(',');
+        }
+
+        function openDetailModal(id) {
+            document.getElementById('detailBody').innerHTML = 'Memuat file...';
+            // Kita panggil detail_riwayat_partial yang akan merender detail_content.html
+            fetch(`/detail-riwayat/${id}/`)
+                .then(r => r.text())
+                .then(html => {
+                    document.getElementById('detailBody').innerHTML = html;
+                    document.getElementById('detailModal').classList.add('show');
+                });
+            // Baris window.open DIBUANG agar tidak terbuka di tab baru
+        }
     </script>
 </body>
 </html>

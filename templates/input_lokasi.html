@@ -38,34 +38,49 @@
         /* Tata Letak Grid Simetris */
         .grid-info {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
-            margin-top: 15px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 18px;
+            margin-top: 20px;
         }
 
         .info-card {
             background: #ffffff;
-            border: 1px solid #dcdcdc;
-            border-radius: 4px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb; /* Garis tipis */
+            border-top: 4px solid #0a6ed1; /* Branding color */
             padding: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+
+        .info-card:hover {
+            transform: translateY(-2px);
         }
 
         .info-card h4 {
-            font-family: "Segoe UI", Arial, sans-serif;
-            color: #333333;
-            font-size: 15px;
-            font-weight: 600;
-            margin-top: 0;
-            margin-bottom: 15px;
-            border-bottom: 2px solid #0056b3;
-            padding-bottom: 6px;
+            display:flex;
+            align-items:center;
+            gap:10px;
+
+            font-size:15px;
+            font-weight:700;
+
+            color:#0a6ed1;
+
+            margin-bottom:18px;
+            padding-bottom:12px;
+
+            border-bottom:1px solid #e5e7eb;
         }
 
         /* Kotak DSS Kesimpulan */
         .info-card-blue {
-            border: 1px solid #b4c6e7;
-            background-color: #f2f5f9;
+            background: linear-gradient(
+                135deg,
+                #f8fbff,
+                #eef5ff
+            );
+
+            border-left:5px solid #0a6ed1;
         }
 
         .info-card-blue h4 {
@@ -75,32 +90,26 @@
 
         /* Pola Baris Data Seragam */
         .data-row {
+            padding: 8px 0;
+            border-bottom: 1px solid #f3f4f6;
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
-            padding: 9px 0;
-            border-bottom: 1px solid #f0f0f0;
-            font-size: 13px;
         }
 
-        .data-row:last-child {
-            border-bottom: none;
+        .data-row:last-child { 
+            border-bottom: none; 
         }
 
         .label-data {
-            color: #666666;
-            font-weight: 500;
-            text-align: left;
-            flex: 1;
-            padding-right: 10px;
+            color:#64748b;
+            font-weight:600;
+            font-size:13px;
         }
 
         .value-data {
-            color: #111111;
-            font-weight: 600;
-            text-align: right;
-            flex: 1.5;
-            word-break: break-word;
+            color:#111827;
+            font-weight:700;
+            font-size:14px;
         }
 
         hr {
@@ -119,12 +128,18 @@
 
         /* Styling Premium Box untuk BI Notes Manager */
         .manager-notes-container {
-            margin-top: 15px;
-            padding: 12px 16px;
-            background-color: #ffffff;
-            border-left: 4px solid #2f5597;
-            border-radius: 0 4px 4px 0;
-            box-shadow: inset 0 0 4px rgba(0,0,0,0.02);
+            margin-top:20px;
+
+            background:white;
+
+            border-radius:10px;
+
+            padding:18px;
+
+            border-left:4px solid #0a6ed1;
+
+            box-shadow:
+                0 1px 2px rgba(0,0,0,.05);
         }
         
         .manager-notes-title {
@@ -154,9 +169,17 @@
     </div>
 
     <div class="nav-menu" style="display: flex; align-items: center; gap: 15px;">
-        <a href="{% url 'dashboard' %}" class="nav-link">Dashboard</a>
+        <a href="{% url 'dashboard' %}"
+        class="nav-link"
+        onclick="return attemptPageLeave(event,this.href)">
+        Dashboard
+        </a>
         <a href="{% url 'input_lokasi' %}" class="nav-link active">Input Titik</a>
-        <a href="{% url 'riwayat' %}" class="nav-link">Riwayat</a>
+        <a href="{% url 'riwayat' %}"
+        class="nav-link"
+        onclick="return attemptPageLeave(event,this.href)">
+        Riwayat
+        </a>
 
         <div class="user-profile" style="display: flex; align-items: center; gap: 12px; border-left: 1px solid #ccc; padding-left: 15px; margin-left: 10px; height: 25px;">            <span style="font-size: 14px; font-weight: bold; color: #555; display: flex; align-items: center; gap: 8px;">
                 <i class="fas fa-user-circle" style="font-size: 20px;"></i> 
@@ -218,7 +241,7 @@
                         {% else %}
                             <div style="background: #fafafa; border: 1px dashed #dcdcdc; padding: 40px; text-align: center; border-radius: 4px;">
                                 <i class="fas fa-draw-polygon analysis-icon" style="font-size: 32px; color: #0056b3; margin-bottom: 10px;"></i>
-                                <p class="analysis-title" style="font-weight: 600; margin: 0;">Visualisasi Area Potensial (Ketik)</p>
+                                <p class="analysis-title" style="font-weight: 600; margin: 0;">Visualisasi Area Potensial</p>
                             </div>
                         {% endif %}
                     </div>
@@ -227,7 +250,7 @@
                         <div class="info-card">
                             <h4><i class="fas fa-info-circle"></i> Master Data Lokasi</h4>
                             <div class="data-row"><span class="label-data">Titik Koordinat</span><span class="value-data" style="color: #0056b3;">{{ latitude|default:"-" }}, {{ longitude|default:"-" }}</span></div>
-                            <div class="data-row"><span class="label-data">Provinsi, Kota</span><span class="value-data">{{ provinsi_kota|default:"-, -" }}</span></div>
+                            <div class="data-row"><span class="label-data">Kota, Provinsi</span><span class="value-data">{{ provinsi_kota|default:"-, -" }}</span></div>
                             <div class="data-row"><span class="label-data">Nama Jalan</span><span class="value-data">{{ nama_jalan|default:"-" }}</span></div>
                             <div class="data-row"><span class="label-data">Deskripsi Rute Jalan</span><span class="value-data" style="font-weight: 500; font-style: italic; color: #444;">{{ road_types_desc }}</span></div>
                             <div class="data-row"><span class="label-data">Intersection Count</span><span class="value-data">{{ intersection_count }} titik</span></div>
@@ -352,7 +375,7 @@
                         <div class="info-card">
                             <h4><i class="fas fa-info-circle"></i> Master Data Lokasi</h4>
                             <div class="data-row"><span class="label-data">Titik Koordinat</span><span class="value-data" style="color: #0056b3;">{{ latitude|default:"-" }}, {{ longitude|default:"-" }}</span></div>
-                            <div class="data-row"><span class="label-data">Provinsi, Kota</span><span class="value-data">{{ provinsi_kota|default:"-, -" }}</span></div>
+                            <div class="data-row"><span class="label-data">Kota, Provinsi</span><span class="value-data">{{ provinsi_kota|default:"-, -" }}</span></div>
                             <div class="data-row"><span class="label-data">Nama Jalan</span><span class="value-data">{{ nama_jalan|default:"-" }}</span></div>
                             <div class="data-row"><span class="label-data">Deskripsi Rute Jalan</span><span class="value-data" style="font-weight: 500; font-style: italic; color: #444;">{{ road_types_desc }}</span></div>
                             <div class="data-row"><span class="label-data">Intersection Count</span><span class="value-data">{{ intersection_count }} titik</span></div>
@@ -476,8 +499,9 @@
     </footer>
 
     <script>
-        let isResultActive = "{% if koordinat and latitude and latitude != '-' %}true{% else %}false{% endif %}" === "true";
+        let hasUnsavedData = "{% if koordinat and latitude and latitude != '-' %}true{% else %}false{% endif %}" === "true";        
         let pendingTab = ''; 
+        let pendingUrl = '';
         let map;
         let marker = null;
         let activeActionPanelId = '';
@@ -560,13 +584,18 @@
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
-                    // CEK DI CONSOLE: Apakah ada ID-nya?
-                    console.log("ID Diterima dari Server:", data.analysis_id); 
-                    
-                    if (data.analysis_id) {
-                        showSuccessPopup(panelId, data.analysis_id); 
-                        triggerSapStatusBar('Sukses disimpan!', 'success');
-                    } else {
+
+                hasUnsavedData = false;
+
+                console.log("ID Diterima dari Server:", data.analysis_id);
+
+                if (data.analysis_id) {
+
+                    showSuccessPopup(panelId, data.analysis_id);
+
+                    triggerSapStatusBar('Sukses disimpan!', 'success');
+
+                } else {
                         triggerSapStatusBar('Gagal: ID tidak ditemukan di server.', 'error');
                     }
                 } else {
@@ -618,21 +647,65 @@
         }
 
         function attemptSwitchTab(type) {
-            if (isResultActive) {
+            if (hasUnsavedData) {
                 pendingTab = type;
                 document.getElementById('warning-modal').style.display = 'flex';
             } else {
                 executeSwitchTab(type);
             }
-        }
 
+        }
         function confirmSwitch() {
+
             document.getElementById('warning-modal').style.display = 'none';
-            isResultActive = false; 
-            executeSwitchTab(pendingTab);
+
+            hasUnsavedData = false;
+
+            if (pendingUrl) {
+
+                window.location.href = pendingUrl;
+
+                return;
+
+            }
+
+            if (pendingTab === 'peta') {
+
+                window.location.href = "{% url 'input_lokasi' %}?tab=peta";
+
+            }
+            else if (pendingTab === 'koordinat') {
+
+                window.location.href = "{% url 'input_lokasi' %}?tab=koordinat";
+
+            }
+
         }
 
-        function cancelSwitch() { document.getElementById('warning-modal').style.display = 'none'; }
+        function cancelSwitch() {
+
+            pendingTab = '';
+            pendingUrl = '';
+
+            document.getElementById('warning-modal').style.display = 'none';
+
+        }
+
+        function attemptPageLeave(event, targetUrl) {
+
+            if (hasUnsavedData) {
+
+                event.preventDefault();
+
+                pendingUrl = targetUrl;
+
+                document.getElementById('warning-modal').style.display = 'flex';
+
+                return false;
+            }
+
+            return true;
+        }
 
         function executeSwitchTab(type) {
             const tabKoord = document.getElementById('content-koordinat');
@@ -680,7 +753,7 @@
             }
         }
 
-        // 🔥 LOGIK INTERAKTIF RENDERING GEOSPATIAL MAPS & UBER H3 INDICES
+        // 🔥 LOGIK INTERAKTIF RENDERING GEOSPATIAL MAPS 
         document.addEventListener("DOMContentLoaded", function () {
             let initialLat = parseFloat("{{ latitude }}") || -6.2088;
             let initialLng = parseFloat("{{ longitude }}") || 106.8456;
@@ -701,7 +774,6 @@
                 const lat = e.latlng.lat.toFixed(6);
                 const lng = e.latlng.lng.toFixed(6);
                 document.getElementById('coord-output').value = `${lat},${lng}`;
-                document.getElementById('input-koordinat').value = `${lat},${lng}`;
                 if(marker){ map.removeLayer(marker); }
                 marker = L.marker([lat, lng]).addTo(map).bindPopup("Titik Terpilih").openPopup();
             });
@@ -718,22 +790,48 @@
                     }).addTo(visualMap);
 
                     // Pasang Pin Marker Kandidat Utama Toko Alfamidi
-                    L.marker([initialLat, initialLng]).addTo(visualMap)
-                        .bindPopup("<b>Kandidat Toko Alfamidi</b><br>{{ nama_jalan }}").openPopup();
+                    const candidateMarker = L.marker(
+                        [initialLat, initialLng]
+                    ).addTo(visualMap);
 
-                    // 🔥 DRAW SEGI-ENAM HEKSAGON H3
-                    let h3Coords = {% if h3_polygon_json %}{{ h3_polygon_json|safe }}{% else %}[]{% endif %};
-                    if (h3Coords && h3Coords.length > 0) {
-                        let h3Polygon = L.polygon(h3Coords, {
-                            color: '#e91e63',       // Garis batas luar Pink Pekat
-                            fillColor: '#ff4081',   // Isi bidang dalam Heksagon
-                            fillOpacity: 0.45,      // Transparansi pas sesuai contoh gambarmu
-                            weight: 3.5             // Ketebalan garis sudut heksagon
-                        }).addTo(visualMap);
-                        
-                        // Kamera otomatis mengunci dan auto-zoom ke area heksagon H3
-                        visualMap.fitBounds(h3Polygon.getBounds());
-                    }
+                    candidateMarker.bindPopup(
+                        "<b>Kandidat Toko Alfamidi</b><br>{{ nama_jalan }}"
+                    );
+
+                    let searchRadius = 1000; // meter
+
+                    let radiusCircle = L.circle(
+                        [initialLat, initialLng],
+                        {
+                            radius: searchRadius,
+
+                            color: '#0056b3',
+                            weight: 3,
+
+                            fillColor: '#90caf9',
+                            fillOpacity: 0.18
+                        }
+                    ).addTo(visualMap);
+
+                    radiusCircle.bindPopup(
+                        "Radius Analisis 1 KM"
+                    );
+
+                    visualMap.setView(
+                        [initialLat, initialLng],
+                        15
+                    );
+
+                    L.circle(
+                        [initialLat, initialLng],
+                        {
+                            radius: 1000,
+                            color: '#dc3545',
+                            weight: 3,
+                            fillColor: '#dc3545',
+                            fillOpacity: 0.15
+                        }
+                    ).addTo(visualMap);
 
                     // 🔥 PLOT SEBARAN BULATAN TITIK POI DATA LIVE DARI PIPELINE KODE SATU
                     let poiMarkers = {% if poi_markers_json %}{{ poi_markers_json|safe }}{% else %}[]{% endif %};
@@ -751,16 +849,48 @@
                             .addTo(visualMap)
                             .bindPopup(`<b>${poi.name}</b><br>Kategori: <span style='text-transform:uppercase;'>${poi.type}</span>`);
                     });
+                    // AUTO FIT SEMUA OBJEK
+                    let groupLayers = [];
+
+                    groupLayers.push(
+                        L.marker([initialLat, initialLng])
+                    );
+
+                    poiMarkers.forEach(function(poi){
+                        groupLayers.push(
+                            L.marker([poi.lat, poi.lng])
+                        );
+                    });
+
+                    if(groupLayers.length > 0){
+
+                                            visualMap.setView(
+                        [initialLat, initialLng],
+                        14
+                    );
+
+                    }
 
                     // Cegah peta glitch/terpotong saat pertama kali dimuat di container dinamis
-                    setTimeout(() => { visualMap.invalidateSize(true); }, 300);
+                    setTimeout(() => {
+
+                        visualMap.invalidateSize();
+
+                    }, 500);
                 }
             }
         });
 
         document.addEventListener("DOMContentLoaded", function () {
             const urlParams = new URLSearchParams(window.location.search);
-            const sourceParam = urlParams.get('source');
+            const tab = urlParams.get('tab');
+
+            if(tab === 'peta'){
+                executeSwitchTab('peta');
+            }
+            else{
+                executeSwitchTab('koordinat');
+            }            const sourceParam = urlParams.get('source');
             const koordParam = urlParams.get('koordinat');
 
             if (koordParam) {
@@ -770,6 +900,17 @@
                     window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
                 }, 400);
             }
+        });
+        window.addEventListener('beforeunload', function (e) {
+
+            if (hasUnsavedData) {
+
+                e.preventDefault();
+
+                e.returnValue = '';
+
+            }
+
         });
     </script>
 </body>
