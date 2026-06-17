@@ -6,6 +6,7 @@ from dashboard import views
 urlpatterns = [
     # Admin Panel
     path("admin/", admin.site.urls),
+    path("api/site-analysis/", views.site_analysis_list),
     # Authentication
     path("", auth_views.LoginView.as_view(template_name="login.html"), name="login"),
     path("logout/", auth_views.LogoutView.as_view(next_page="login"), name="logout"),
@@ -16,8 +17,12 @@ urlpatterns = [
     # Analysis & API Endpoints
     path("road-feature/", views.road_feature_api, name="road_feature"),
     path("input-lokasi/simpan/", views.simpan_lokasi, name="simpan_lokasi"),
-    path('detail-riwayat/<int:analysis_id>/', views.detail_riwayat_partial, name='detail_riwayat_partial'),
-    path('preview-pdf/<int:analysis_id>/', views.preview_pdf, name='preview_pdf'),
+    path(
+        "detail-riwayat/<int:analysis_id>/",
+        views.detail_riwayat_partial,
+        name="detail_riwayat_partial",
+    ),
+    path("preview-pdf/<int:analysis_id>/", views.preview_pdf, name="preview_pdf"),
     # PDF Generation (Consolidated to single endpoint name)
     path("generate-pdf/<int:analysis_id>/", views.generate_pdf, name="generate_pdf"),
     # Kept for backward compatibility if specifically referenced in old templates

@@ -27,6 +27,19 @@ from .models import (
     SiteAnalysis,
 )
 
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from .models import SiteAnalysis
+from .serializers import SiteAnalysisSerializer
+
+
+@api_view(["GET"])
+def site_analysis_list(request):
+    data = SiteAnalysis.objects.all()
+    serializer = SiteAnalysisSerializer(data, many=True)
+    return Response(serializer.data)
+
+
 # Configuration
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MODEL_PATH = os.path.abspath(
