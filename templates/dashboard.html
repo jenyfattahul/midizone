@@ -7,152 +7,655 @@
     <title>MidiZone - Dashboard</title>
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        .dashboard-summary{
-    display:grid;
-    grid-template-columns:repeat(4,1fr);
-    gap:20px;
-    margin:20px 0;
-}
+        /* ── DASHBOARD TAMBAHAN ── */
+        .dash-page { background: #f0f4f8; }
 
-.summary-box{
-    background:#fff;
-    padding:20px;
-    border-radius:10px;
-    box-shadow:0 2px 8px rgba(0,0,0,.08);
-}
+        .dash-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 24px;
+        }
+        .dash-header h2 {
+            font-size: 1.4rem;
+            color: #1a2b49;
+            margin-bottom: 4px;
+        }
+        .dash-header p {
+            font-size: 13px;
+            color: #8a94a6;
+        }
 
-.summary-title{
-    font-size:13px;
-    color:#64748b;
-    font-weight:600;
-}
+        /* ── STAT CARDS ── */
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 18px 20px;
+            border: 1px solid #e0e6ed;
+        }
+        .stat-card .label {
+            font-size: 12px;
+            color: #8a94a6;
+            font-weight: 600;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            line-height: 1;
+            color: #1a2b49;
+        }
+        .stat-card .badge-sub {
+            display: inline-block;
+            margin-top: 8px;
+            font-size: 11px;
+            padding: 3px 9px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+        .badge-blue   { background: #dbeeff; color: #004a8f; }
+        .badge-green  { background: #d4edda; color: #155724; }
+        .badge-amber  { background: #fff3cd; color: #856404; }
+        .badge-red    { background: #f8d7da; color: #721c24; }
+        .badge-gray   { background: #edf2f7; color: #4a5568; }
 
-.summary-value{
-    font-size:32px;
-    font-weight:700;
-    margin-top:10px;
-}
+        /* ── MAIN GRID ── */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
 
-.success{
-    color:#2e7d32;
-}
+        .dash-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px 22px;
+            border: 1px solid #e0e6ed;
+        }
+        .dash-card h4 {
+            font-size: 14px;
+            color: #1a2b49;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .dash-card h4 i {
+            color: #8a94a6;
+            font-size: 15px;
+        }
 
-.danger{
-    color:#dc3545;
-}
+        /* ── DONUT ── */
+        .donut-wrap {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .donut-wrap svg { flex-shrink: 0; }
+        .legend-list { display: flex; flex-direction: column; gap: 8px; }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #4a5568;
+        }
+        .legend-dot {
+            width: 11px;
+            height: 11px;
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+        .legend-item span.count {
+            margin-left: auto;
+            font-weight: 700;
+            color: #1a2b49;
+        }
 
-.dashboard-chart{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:20px;
-    margin-bottom:20px;
-}
+        /* ── BAR CHART POI ── */
+        .bar-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 9px;
+        }
+        .bar-label {
+            width: 90px;
+            font-size: 12px;
+            color: #718096;
+            text-align: right;
+            flex-shrink: 0;
+        }
+        .bar-track {
+            flex: 1;
+            height: 8px;
+            background: #edf2f7;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .bar-fill { height: 100%; border-radius: 4px; }
+        .bar-val {
+            width: 28px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #1a2b49;
+            text-align: right;
+        }
 
-.chart-card{
-    background:#fff;
-    border-radius:10px;
-    padding:20px;
-    box-shadow:0 2px 8px rgba(0,0,0,.08);
-}
+        /* ── ZONA CARDS ── */
+        .zona-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+        .zona-card { border-radius: 10px; padding: 12px 14px; }
+        .zona-card.jabo  { background: #dbeeff; }
+        .zona-card.nonjabo { background: #d4edda; }
+        .zona-card .zlabel { font-size: 11px; font-weight: 600; margin-bottom: 4px; }
+        .zona-card.jabo .zlabel { color: #004a8f; }
+        .zona-card.nonjabo .zlabel { color: #155724; }
+        .zona-card .zval { font-size: 1.6rem; font-weight: 700; }
+        .zona-card.jabo .zval { color: #004a8f; }
+        .zona-card.nonjabo .zval { color: #155724; }
+        .zona-card .zsub { font-size: 10px; margin-top: 2px; }
+        .zona-card.jabo .zsub { color: #1a5276; }
+        .zona-card.nonjabo .zsub { color: #1e5631; }
 
-.table-card{
-    background:#fff;
-    border-radius:10px;
-    padding:20px;
-    box-shadow:0 2px 8px rgba(0,0,0,.08);
-}
+        /* ── DIVIDER ── */
+        .hr { height: 1px; background: #edf2f7; margin: 12px 0; }
+        .info-row { display: flex; justify-content: space-between; font-size: 12px; padding: 3px 0; }
+        .info-row .ik { color: #8a94a6; }
+        .info-row .iv { font-weight: 700; color: #1a2b49; }
 
-#pieChart,
-#barChart{
-    height:300px !important;
-}
-</style>
+        /* ── PETA SECTION ── */
+        .map-section {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e0e6ed;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        .map-section-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid #edf2f7;
+        }
+        .map-section-head h4 {
+            font-size: 14px;
+            color: #1a2b49;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0;
+        }
+        .map-section-head h4 i { color: #8a94a6; }
+
+        .map-eco-banner {
+            background: #e8f5e9;
+            border-bottom: 1px solid #c8e6c9;
+            padding: 8px 20px;
+            font-size: 12px;
+            color: #2e7d32;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Peta placeholder (SVG statis, 0 API call) */
+        #peta-placeholder {
+            padding: 20px;
+            display: block;
+        }
+        #peta-leaflet {
+            display: none;
+            height: 380px;
+        }
+        #map { width: 100%; height: 100%; }
+
+        .map-legend-row {
+            display: flex;
+            gap: 16px;
+            padding: 10px 20px 14px;
+            flex-wrap: wrap;
+        }
+        .map-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            color: #4a5568;
+        }
+        .map-legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+
+        /* ── RIWAYAT TERBARU ── */
+        .riwayat-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 9px 0;
+            border-bottom: 1px solid #f0f3f7;
+        }
+        .riwayat-row:last-child { border: none; }
+        .ric {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 13px;
+        }
+        .ric.g { background: #d4edda; color: #155724; }
+        .ric.a { background: #fff3cd; color: #856404; }
+        .ric.r { background: #f8d7da; color: #721c24; }
+        .ri { flex: 1; min-width: 0; }
+        .rn { font-size: 13px; font-weight: 600; color: #1a2b49; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .rs { font-size: 11px; color: #8a94a6; margin-top: 1px; }
+
+        /* ── FULL WIDTH CARD ── */
+        .full-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px 22px;
+            border: 1px solid #e0e6ed;
+            margin-bottom: 20px;
+        }
+        .full-card h4 {
+            font-size: 14px;
+            color: #1a2b49;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        @media (max-width: 900px) {
+            .stat-grid { grid-template-columns: 1fr 1fr; }
+            .main-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 600px) {
+            .stat-grid { grid-template-columns: 1fr; }
+        }
+    </style>
 </head>
-<body>
+<body class="dash-page">
 
-<nav class="navbar">
+    <nav class="navbar" style="display: flex; justify-content: space-between; align-items: center;">
     <div class="nav-brand">
-        <div class="logo-circle">
-            <i class="fas fa-map-marker-alt"></i>
-        </div>
+        <div class="logo-circle"><i class="fas fa-map-marker-alt"></i></div>
         <h1>MidiZone</h1>
     </div>
 
     <div class="nav-menu" style="display: flex; align-items: center; gap: 15px;">
-        
-        <span style="font-size: 14px; font-weight: bold; color: #555; display: flex; align-items: center; gap: 8px;">
-            <i class="fas fa-user-circle" style="font-size: 20px;"></i> 
-            {% if request.user.first_name %}
-                {{ request.user.first_name|upper }}
-            {% else %}
-                {{ request.user.username|cut:"@gmail.com"|cut:"@yahoo.com"|upper }}
-            {% endif %}
-        </span>
+        <a href="{% url 'dashboard' %}"
+        class="nav-link active"
+        onclick="return attemptPageLeave(event,this.href)">
+        Dashboard
+        </a>
+        <a href="{% url 'input_lokasi' %}" class="nav-link">Input Titik</a>
+        <a href="{% url 'riwayat' %}"
+        class="nav-link"
+        onclick="return attemptPageLeave(event,this.href)">
+        Riwayat
+        </a>
 
-        <form action="{% url 'logout' %}" method="post" style="margin: 0;">
-            {% csrf_token %}
-            <button type="submit" style="background-color: #dc3545; color: white; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 12px;">
-                Logout
-            </button>
-        </form>
+        <div class="user-profile" style="display: flex; align-items: center; gap: 12px; border-left: 1px solid #ccc; padding-left: 15px; margin-left: 10px; height: 25px;">            <span style="font-size: 14px; font-weight: bold; color: #555; display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-user-circle" style="font-size: 20px;"></i> 
+                {% if request.user.first_name %}
+                    {{ request.user.first_name|upper }}
+                {% else %}
+                    {{ request.user.username|cut:"@gmail.com"|cut:"@yahoo.com"|upper }}
+                {% endif %}
+            </span>
+        </div>
+            <form action="{% url 'logout' %}" method="post" style="margin: 0;">
+                {% csrf_token %}
+                <button type="submit" style="background-color: #dc3545; color: white; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                    Logout
+                </button>
+            </form>
+
     </div>
 </nav>
 
     <main class="container">
-        <div class="action-bar">
+
+        <!-- ── HEADER ── -->
+        <div class="dash-header">
+            <div>
+                <h2>Ringkasan Analisis Lokasi</h2>
+                <p>Data dari database lokal</p>
+            </div>
             <a href="{% url 'input_lokasi' %}" class="btn btn-primary">
                 <i class="fas fa-plus-circle"></i> Input Lokasi Baru
             </a>
-            <a href="{% url 'riwayat' %}" class="btn btn-success">
-                <i class="fas fa-history"></i> Lihat Riwayat
-            </a>
         </div>
-        <div class="dashboard-summary">
 
-    <div class="summary-box">
-        <div class="summary-title">Total Analisis</div>
-        <div class="summary-value">{{ total_analisis }}</div>
-    </div>
-
-    <div class="summary-box">
-        <div class="summary-title">Lokasi Layak</div>
-        <div class="summary-value success">
-            {{ total_layak }}
+        <!-- ── STAT CARDS ── -->
+        <div class="stat-grid">
+            <div class="stat-card">
+                <div class="label">Total analisis</div>
+                <div class="value">{{ total|default:"0" }}</div>
+                <span class="badge-sub badge-blue">semua waktu</span>
+            </div>
+            <div class="stat-card">
+                <div class="label">Highly recommended</div>
+                <div class="value" style="color:#155724">{{ highly|default:"0" }}</div>
+                <span class="badge-sub badge-green">{{ pct_highly|default:"0" }}% dari total</span>
+            </div>
+            <div class="stat-card">
+                <div class="label">Considered</div>
+                <div class="value" style="color:#856404">{{ considered|default:"0" }}</div>
+                <span class="badge-sub badge-amber">{{ pct_considered|default:"0" }}% dari total</span>
+            </div>
+            <div class="stat-card">
+                <div class="label">Not recommended</div>
+                <div class="value" style="color:#721c24">{{ not_rec|default:"0" }}</div>
+                <span class="badge-sub badge-red">{{ pct_not_rec|default:"0" }}% dari total</span>
+            </div>
         </div>
-    </div>
 
-    <div class="summary-box">
-        <div class="summary-title">Lokasi Tidak Layak</div>
-        <div class="summary-value danger">
-            {{ total_tidak_layak }}
+        <!-- ── MAIN GRID ── -->
+        <div class="main-grid">
+
+            <!-- Donut chart distribusi -->
+            <div class="dash-card">
+                <h4><i class="fas fa-chart-pie"></i> Distribusi rekomendasi</h4>
+
+                {% if total > 0 %}
+                <div class="donut-wrap">
+                    {% with circ=213.628 %}
+                    {% with seg_hr=pct_highly|floatformat:0 %}
+                    {% with seg_c=pct_considered|floatformat:0 %}
+                    <svg width="100" height="100" viewBox="0 0 100 100" aria-hidden="true">
+                        <circle cx="50" cy="50" r="34" fill="none" stroke="#edf2f7" stroke-width="16"/>
+
+                        <!-- Highly Recommended (hijau) -->
+                        <circle cx="50" cy="50" r="34" fill="none" stroke="#28a745" stroke-width="16"
+                            stroke-dasharray="{{ pct_highly|floatformat:1 }} 100"
+                            stroke-dasharray="calc({{ pct_highly }} * 2.13628) calc((100 - {{ pct_highly }}) * 2.13628)"
+                            transform="rotate(-90 50 50)"
+                            stroke-linecap="butt"
+                            style="stroke-dasharray: calc({{ pct_highly }} * 2.136) calc((100 - {{ pct_highly }}) * 2.136);"
+                        />
+                        <!-- Considered (kuning) -->
+                        <circle cx="50" cy="50" r="34" fill="none" stroke="#ffc107" stroke-width="16"
+                            transform="rotate(-90 50 50)"
+                            stroke-linecap="butt"
+                            style="stroke-dasharray: calc({{ pct_considered }} * 2.136) calc((100 - {{ pct_considered }}) * 2.136); stroke-dashoffset: calc(-{{ pct_highly }} * 2.136);"
+                        />
+                        <!-- Not Recommended (merah) -->
+                        <circle cx="50" cy="50" r="34" fill="none" stroke="#dc3545" stroke-width="16"
+                            transform="rotate(-90 50 50)"
+                            stroke-linecap="butt"
+                            style="stroke-dasharray: calc({{ pct_not_rec }} * 2.136) calc((100 - {{ pct_not_rec }}) * 2.136); stroke-dashoffset: calc(-({{ pct_highly }} + {{ pct_considered }}) * 2.136);"
+                        />
+
+                        <text x="50" y="46" text-anchor="middle" font-size="14" font-weight="700" fill="#1a2b49">{{ total }}</text>
+                        <text x="50" y="59" text-anchor="middle" font-size="8" fill="#8a94a6">analisis</text>
+                    </svg>
+                    {% endwith %}{% endwith %}{% endwith %}
+
+                    <div class="legend-list">
+                        <div class="legend-item">
+                            <div class="legend-dot" style="background:#28a745;"></div>
+                            Highly recommended
+                            <span class="count">{{ highly }}</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-dot" style="background:#ffc107;"></div>
+                            Considered
+                            <span class="count">{{ considered }}</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-dot" style="background:#dc3545;"></div>
+                            Not recommended
+                            <span class="count">{{ not_rec }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div style="text-align:center;padding:30px;color:#8a94a6;">
+                    <i class="fas fa-inbox fa-2x" style="margin-bottom:10px;display:block;"></i>
+                    Belum ada data. Mulai dari Input Lokasi.
+                </div>
+                {% endif %}
+
+                <div class="hr"></div>
+                <div class="info-row">
+                    <span class="ik">Zona Jabodetabek</span>
+                    <span class="iv">{{ jabo }} analisis</span>
+                </div>
+                <div class="info-row">
+                    <span class="ik">Zona luar Jabodetabek</span>
+                    <span class="iv">{{ luar_jabo }} analisis</span>
+                </div>
+            </div>
+
+            <!-- Bar chart rata-rata POI -->
+            <div class="dash-card">
+                <h4><i class="fas fa-chart-bar"></i> Rata-rata POI per lokasi</h4>
+
+                {% if total > 0 %}
+                {% with max_val=avg_restaurant %}
+                <div class="bar-row">
+                    <span class="bar-label">Restaurant</span>
+                    <div class="bar-track"><div class="bar-fill" style="width:{% if avg_restaurant > 0 %}{{ avg_restaurant|floatformat:0 }}{% else %}0{% endif %}%;background:#007bff;max-width:100%;"></div></div>
+                    <span class="bar-val">{{ avg_restaurant }}</span>
+                </div>
+                {% endwith %}
+                <div class="bar-row">
+                    <span class="bar-label">Minimarket</span>
+                    <div class="bar-track"><div class="bar-fill" style="width:{% widthratio avg_minimarket 20 100 %}%;background:#28a745;max-width:100%;"></div></div>
+                    <span class="bar-val">{{ avg_minimarket }}</span>
+                </div>
+                <div class="bar-row">
+                    <span class="bar-label">Bank/ATM</span>
+                    <div class="bar-track"><div class="bar-fill" style="width:{% widthratio avg_bank 20 100 %}%;background:#17a2b8;max-width:100%;"></div></div>
+                    <span class="bar-val">{{ avg_bank }}</span>
+                </div>
+                <div class="bar-row">
+                    <span class="bar-label">Sekolah</span>
+                    <div class="bar-track"><div class="bar-fill" style="width:{% widthratio avg_school 20 100 %}%;background:#fd7e14;max-width:100%;"></div></div>
+                    <span class="bar-val">{{ avg_school }}</span>
+                </div>
+                <div class="bar-row">
+                    <span class="bar-label">RS/Klinik</span>
+                    <div class="bar-track"><div class="bar-fill" style="width:{% widthratio avg_hospital 20 100 %}%;background:#e83e8c;max-width:100%;"></div></div>
+                    <span class="bar-val">{{ avg_hospital }}</span>
+                </div>
+                <div class="bar-row">
+                    <span class="bar-label">Supermarket</span>
+                    <div class="bar-track"><div class="bar-fill" style="width:{% widthratio avg_supermarket 20 100 %}%;background:#6f42c1;max-width:100%;"></div></div>
+                    <span class="bar-val">{{ avg_supermarket }}</span>
+                </div>
+                {% else %}
+                <div style="text-align:center;padding:20px;color:#8a94a6;font-size:13px;">Belum ada data POI.</div>
+                {% endif %}
+
+                <div class="hr"></div>
+                <div class="info-row">
+                    <span class="ik">Avg. traffic score Jabodetabek</span>
+                    <span class="iv">{{ avg_traffic_jabo }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="ik">Avg. traffic score luar Jabo</span>
+                    <span class="iv">{{ avg_traffic_non_jabo }}</span>
+                </div>
+            </div>
         </div>
-    </div>
 
-    <div class="summary-box">
-        <div class="summary-title">Confidence Rata-rata</div>
-        <div class="summary-value">
-            {{ avg_confidence }}%
+        <!-- ── PETA SEBARAN (hemat API) ── -->
+        <div class="map-section">
+            <div class="map-section-head">
+                <h4><i class="fas fa-map-marked-alt"></i> Sebaran titik analisis</h4>
+                <button class="btn btn-primary" id="btn-buka-peta" onclick="bukaPeta()">
+                    <i class="fas fa-map"></i> Buka peta interaktif
+                </button>
+            </div>
+
+            <div class="map-eco-banner">
+                <i class="fas fa-leaf"></i>
+                Mode hemat API aktif &mdash; peta interaktif hanya dimuat saat kamu klik tombol di atas.
+                Menggunakan <strong>Leaflet.js + OpenStreetMap</strong> (gratis, 0 biaya API).
+            </div>
+
+            <!-- Tabel ringkas sebagai default (0 API call) -->
+            <div id="peta-placeholder">
+                {% if titik_peta %}
+                <div style="overflow-x:auto;">
+                    <table class="data-table" style="font-size:13px;">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Nama Jalan</th>
+                                <th>Koordinat</th>
+                                <th>Rekomendasi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for titik in titik_peta %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>{{ titik.nama_jalan }}</td>
+                                <td style="font-family:monospace;font-size:11px;">{{ titik.latitude }}, {{ titik.longitude }}</td>
+                                <td>
+                                    {% if titik.rekomendasi == 'Highly Recommended' %}
+                                        <span class="badge-sub badge-green">Highly Recommended</span>
+                                    {% elif titik.rekomendasi == 'Considered' %}
+                                        <span class="badge-sub badge-amber">Considered</span>
+                                    {% else %}
+                                        <span class="badge-sub badge-red">Not Recommended</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div style="text-align:center;padding:40px;color:#8a94a6;">
+                    <i class="fas fa-map-pin fa-2x" style="display:block;margin-bottom:10px;"></i>
+                    Belum ada titik analisis tersimpan.
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Container peta Leaflet (dimuat on-demand) -->
+            <div id="peta-leaflet">
+                <div id="map"></div>
+            </div>
+
+            <div class="map-legend-row">
+                <div class="map-legend-item">
+                    <div class="map-legend-dot" style="background:#28a745;"></div>
+                    Highly recommended
+                </div>
+                <div class="map-legend-item">
+                    <div class="map-legend-dot" style="background:#ffc107;"></div>
+                    Considered
+                </div>
+                <div class="map-legend-item">
+                    <div class="map-legend-dot" style="background:#dc3545;"></div>
+                    Not recommended
+                </div>
+            </div>
         </div>
-    </div>
 
-</div>
-<div class="dashboard-chart">
+        <!-- ── BARIS BAWAH: Zona + Riwayat ── -->
+        <div class="main-grid">
 
-    <div class="chart-card">
-        <h3>Layak vs Tidak Layak</h3>
+            <!-- Breakdown zona ML -->
+            <div class="dash-card">
+                <h4><i class="fas fa-layer-group"></i> Breakdown zona model ML</h4>
 
-<canvas id="pieChart" height="300"></canvas>
-    </div>
+                <div class="zona-grid">
+                    <div class="zona-card jabo">
+                        <div class="zlabel">Jabodetabek</div>
+                        <div class="zval">{{ jabo }}</div>
+                        <div class="zsub">threshold 110 &ndash; 175</div>
+                    </div>
+                    <div class="zona-card nonjabo">
+                        <div class="zlabel">Luar Jabodetabek</div>
+                        <div class="zval">{{ luar_jabo }}</div>
+                        <div class="zsub">threshold 5.10 &ndash; 5.65</div>
+                    </div>
+                </div>
 
-    <div class="chart-card">
-        <h3>Top 5 Lokasi Terbaik</h3>
+                <div class="hr"></div>
+                <div class="info-row">
+                    <span class="ik">Avg. traffic score Jabodetabek</span>
+                    <span class="iv">{{ avg_traffic_jabo }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="ik">Avg. traffic score luar Jabo</span>
+                    <span class="iv">{{ avg_traffic_non_jabo }}</span>
+                </div>
 
-<canvas id="barChart" height="300"></canvas>
-    </div>
+                <div class="hr"></div>
+                <div style="text-align:center;margin-top:6px;">
+                    <a href="{% url 'riwayat' %}" class="btn btn-secondary" style="display:inline-flex;gap:8px;justify-content:center;">
+                        <i class="fas fa-history"></i> Lihat semua riwayat
+                    </a>
+                </div>
+            </div>
 
-</div>
+            <!-- 5 analisis terbaru -->
+            <div class="dash-card">
+                <h4><i class="fas fa-clock"></i> Analisis terbaru</h4>
+
+                {% if terbaru %}
+                    {% for item in terbaru %}
+                    <div class="riwayat-row">
+                        <div class="ric {% if item.rekomendasi == 'Highly Recommended' %}g{% elif item.rekomendasi == 'Considered' %}a{% else %}r{% endif %}">
+                            {% if item.rekomendasi == 'Highly Recommended' %}
+                                <i class="fas fa-check"></i>
+                            {% elif item.rekomendasi == 'Considered' %}
+                                <i class="fas fa-minus"></i>
+                            {% else %}
+                                <i class="fas fa-times"></i>
+                            {% endif %}
+                        </div>
+                        <div class="ri">
+                            <div class="rn">{{ item.nama_jalan }}</div>
+                            <div class="rs">
+                                {{ item.wilayah_ml }} &middot;
+                                score {{ item.traffic_score|floatformat:1 }} &middot;
+                                {{ item.dibuat_pada|date:"d M Y" }}
+                            </div>
+                        </div>
+                        {% if item.rekomendasi == 'Highly Recommended' %}
+                            <span class="badge-sub badge-green">Highly Rec.</span>
+                        {% elif item.rekomendasi == 'Considered' %}
+                            <span class="badge-sub badge-amber">Considered</span>
+                        {% else %}
+                            <span class="badge-sub badge-red">Not Rec.</span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                <div style="text-align:center;padding:30px;color:#8a94a6;font-size:13px;">
+                    <i class="fas fa-inbox fa-2x" style="display:block;margin-bottom:10px;"></i>
+                    Belum ada analisis tersimpan.
+                </div>
+                {% endif %}
+            </div>
+
+        </div>
 
     </main>
 
@@ -160,51 +663,104 @@
         <p>&copy; 2026 PT Midi Utama Indonesia Tbk. | v1.0.0</p>
     </footer>
 
+    <!-- Leaflet dimuat HANYA saat klik tombol (hemat API) -->
     <script>
+        var petaSudahDimuat = false;
 
-const pieCtx = document.getElementById('pieChart');
+        var titikData = [
+            {% for titik in titik_peta %}
+            {
+                lat: {{ titik.latitude }},
+                lon: {{ titik.longitude }},
+                nama: "{{ titik.nama_jalan|escapejs }}",
+                rec: "{{ titik.rekomendasi|escapejs }}"
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ];
 
-if (pieCtx) {
-    new Chart(pieCtx, {
-        type: 'pie',
-        data: {
-            labels: ['Layak', 'Tidak Layak'],
-            datasets: [{
-                data: [
-                    {{ total_layak|default:0 }},
-                    {{ total_tidak_layak|default:0 }}
-                ]
-            }]
+        function bukaPeta() {
+            var placeholder = document.getElementById('peta-placeholder');
+            var petaDiv     = document.getElementById('peta-leaflet');
+            var btn         = document.getElementById('btn-buka-peta');
+
+            placeholder.style.display = 'none';
+            petaDiv.style.display     = 'block';
+            btn.innerHTML = '<i class="fas fa-table"></i> Tampilkan tabel';
+            btn.setAttribute('onclick', 'tampilkanTabel()');
+
+            if (!petaSudahDimuat) {
+                petaSudahDimuat = true;
+                muatLeaflet();
+            }
         }
-    });
-}
 
+        function tampilkanTabel() {
+            var placeholder = document.getElementById('peta-placeholder');
+            var petaDiv     = document.getElementById('peta-leaflet');
+            var btn         = document.getElementById('btn-buka-peta');
 
-const barCtx = document.getElementById('barChart');
-
-if (barCtx) {
-    new Chart(barCtx, {
-        type: 'bar',
-        data: {
-            labels: [
-                {% for item in top_locations %}
-                "Lokasi {{ forloop.counter }}",
-                {% endfor %}
-            ],
-            datasets: [{
-                label: 'Confidence',
-                data: [
-                    {% for item in top_locations %}
-                        {{ item.confidence_score }},
-                    {% endfor %}
-                ]
-            }]
+            placeholder.style.display = 'block';
+            petaDiv.style.display     = 'none';
+            btn.innerHTML = '<i class="fas fa-map"></i> Buka peta interaktif';
+            btn.setAttribute('onclick', 'bukaPeta()');
         }
-    });
-}
 
+        function muatLeaflet() {
+            // Load Leaflet CSS
+            var link = document.createElement('link');
+            link.rel  = 'stylesheet';
+            link.href = 'https://unpkg.com/leaflet/dist/leaflet.css';
+            document.head.appendChild(link);
 
-</script>
+            // Load Leaflet JS
+            var script = document.createElement('script');
+            script.src = 'https://unpkg.com/leaflet/dist/leaflet.js';
+            script.onload = function() { inisialisasiPeta(); };
+            document.head.appendChild(script);
+        }
+
+        function inisialisasiPeta() {
+            var pusatDefault = [-6.9, 107.6];
+            if (titikData.length > 0) {
+                pusatDefault = [titikData[0].lat, titikData[0].lon];
+            }
+
+            var map = L.map('map').setView(pusatDefault, 10);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+                maxZoom: 19
+            }).addTo(map);
+
+            var warna = {
+                'Highly Recommended': '#28a745',
+                'Considered':         '#ffc107',
+                'Not Recommended':    '#dc3545'
+            };
+
+            titikData.forEach(function(t) {
+                var w = warna[t.rec] || '#6c757d';
+                var marker = L.circleMarker([t.lat, t.lon], {
+                    radius:      9,
+                    color:       'white',
+                    weight:      2,
+                    fillColor:   w,
+                    fillOpacity: 0.9
+                }).addTo(map);
+
+                marker.bindPopup(
+                    '<strong>' + t.nama + '</strong><br>' +
+                    '<span style="color:' + w + ';font-weight:bold;">' + t.rec + '</span><br>' +
+                    '<small>' + t.lat.toFixed(5) + ', ' + t.lon.toFixed(5) + '</small>'
+                );
+            });
+
+            if (titikData.length > 1) {
+                var bounds = titikData.map(function(t) { return [t.lat, t.lon]; });
+                map.fitBounds(bounds, { padding: [30, 30] });
+            }
+        }
+    </script>
 
 </body>
 </html>

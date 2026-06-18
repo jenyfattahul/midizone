@@ -16,7 +16,7 @@ class Location(models.Model):
 
     # Tambahkan fungsi ini di bawah field address
     def get_formatted_address(self):
-        parts = [p.strip() for p in self.address.split(',')]
+        parts = [p.strip() for p in self.address.split(",")]
         # Logika: Jika formatnya [Jalan, Provinsi, Kota], ubah jadi [Jalan, Kota, Provinsi]
         if len(parts) >= 3:
             return f"{parts[0]}, {parts[2]}, {parts[1]}"

@@ -108,30 +108,126 @@ from .models import SiteAnalysis, ModelResult
 
 
 @login_required(login_url="login")
+@login_required(login_url="login")
 def dashboard_view(request):
 
-    total_analisis = SiteAnalysis.objects.count()
-
-    total_layak = ModelResult.objects.filter(feasibility_prediction="LAYAK").count()
-
-    total_tidak_layak = ModelResult.objects.filter(
-        feasibility_prediction="TIDAK LAYAK"
-    ).count()
-
-    avg_confidence = (
-        ModelResult.objects.aggregate(avg=Avg("confidence_score"))["avg"] or 0
+    analyses = SiteAnalysis.objects.select_related("location").prefetch_related(
+        "results", "snapshots"
     )
 
-    top_locations = ModelResult.objects.select_related("analysis").order_by(
-        "-confidence_score"
-    )[:5]
+    total = analyses.count()
+
+    highly = ModelResult.objects.filter(feasibility_prediction__iexact="LAYAK").count()
+
+    not_rec = ModelResult.objects.filter(
+        feasibility_prediction__iexact="TIDAK LAYAK"
+    ).count()
+
+    considered = max(total - highly - not_rec, 0)
+
+    pct_highly = round((highly / total * 100), 1) if total else 0
+    pct_considered = round((considered / total * 100), 1) if total else 0
+    pct_not_rec = round((not_rec / total * 100), 1) if total else 0
+
+    jabo = SiteAnalysis.objects.filter(region__iexact="jabodetabek").count()
+
+    luar_jabo = total - jabo
+
+    snapshot_avg = AnalysisSnapshot.objects.aggregate(
+        avg_restaurant=Avg("restaurant_count"),
+        avg_school=Avg("school_count"),
+        avg_bank=Avg("bank_count"),
+        avg_hospital=Avg("hospital_count"),
+        avg_supermarket=Avg("supermarket_count"),
+        avg_minimarket=Avg("other_minimarket_count"),
+    )
+
+    avg_traffic_jabo = (
+        ModelResult.objects.filter(analysis__region__iexact="jabodetabek").aggregate(
+            avg=Avg("traffic_score_prediction")
+        )["avg"]
+        or 0
+    )
+
+    avg_traffic_non_jabo = (
+        ModelResult.objects.exclude(analysis__region__iexact="jabodetabek").aggregate(
+            avg=Avg("traffic_score_prediction")
+        )["avg"]
+        or 0
+    )
+
+    titik_peta = []
+    terbaru = []
+
+    for analysis in analyses:
+        result = analysis.results.first()
+
+        if result:
+            prediksi = result.feasibility_prediction
+        else:
+            prediksi = "LAYAK"
+
+        if prediksi.upper() == "LAYAK":
+            rekomendasi = "Highly Recommended"
+        elif prediksi.upper() == "TIDAK LAYAK":
+            rekomendasi = "Not Recommended"
+        else:
+            rekomendasi = "Considered"
+
+        titik_peta.append(
+            {
+                "latitude": analysis.location.latitude,
+                "longitude": analysis.location.longitude,
+                "nama_jalan": analysis.location.get_formatted_address(),
+                "rekomendasi": rekomendasi,
+            }
+        )
+
+    for analysis in analyses.order_by("-input_date")[:5]:
+        result = analysis.results.first()
+
+        if result:
+            prediksi = result.feasibility_prediction
+        else:
+            prediksi = "LAYAK"
+
+        if prediksi.upper() == "LAYAK":
+            rekomendasi = "Highly Recommended"
+        elif prediksi.upper() == "TIDAK LAYAK":
+            rekomendasi = "Not Recommended"
+        else:
+            rekomendasi = "Considered"
+
+        terbaru.append(
+            {
+                "nama_jalan": analysis.location.get_formatted_address(),
+                "rekomendasi": rekomendasi,
+                "traffic_score": (result.traffic_score_prediction if result else 0),
+                "wilayah_ml": analysis.region,
+                "dibuat_pada": analysis.input_date,
+            }
+        )
 
     context = {
-        "total_analisis": total_analisis,
-        "total_layak": total_layak,
-        "total_tidak_layak": total_tidak_layak,
-        "avg_confidence": round(avg_confidence, 1),
-        "top_locations": top_locations,
+        "total": total,
+        "highly": highly,
+        "considered": considered,
+        "not_rec": not_rec,
+        "pct_highly": pct_highly,
+        "pct_considered": pct_considered,
+        "pct_not_rec": pct_not_rec,
+        "jabo": jabo,
+        "luar_jabo": luar_jabo,
+        "avg_restaurant": round(snapshot_avg["avg_restaurant"] or 0, 1),
+        "avg_minimarket": round(snapshot_avg["avg_minimarket"] or 0, 1),
+        "avg_bank": round(snapshot_avg["avg_bank"] or 0, 1),
+        "avg_school": round(snapshot_avg["avg_school"] or 0, 1),
+        "avg_hospital": round(snapshot_avg["avg_hospital"] or 0, 1),
+        "avg_supermarket": round(snapshot_avg["avg_supermarket"] or 0, 1),
+        "avg_traffic_jabo": round(avg_traffic_jabo, 1),
+        "avg_traffic_non_jabo": round(avg_traffic_non_jabo, 1),
+        "titik_peta": titik_peta,
+        "terbaru": terbaru,
     }
 
     return render(
