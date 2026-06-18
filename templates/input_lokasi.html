@@ -604,11 +604,30 @@
 
                 if (data.analysis_id) {
 
-                    showSuccessPopup(panelId, data.analysis_id);
+    // sembunyikan tombol
+    const panel = document.getElementById(panelId);
 
-                    triggerSapStatusBar('Sukses disimpan!', 'success');
+    panel.innerHTML = `
+        <div style="
+            width:100%;
+            padding:14px;
+            background:#e8f5e9;
+            border:1px solid #81c784;
+            border-radius:6px;
+            color:#2e7d32;
+            font-weight:600;
+            text-align:center;
+        ">
+            <i class="fas fa-check-circle"></i>
+            Data sudah disimpan ke database
+        </div>
+    `;
 
-                } else {
+    showSuccessPopup(panelId, data.analysis_id);
+
+    triggerSapStatusBar('Sukses disimpan!', 'success');
+
+} else {
                         triggerSapStatusBar('Gagal: ID tidak ditemukan di server.', 'error');
                     }
                 } else {
@@ -660,19 +679,29 @@
         }
 
         function attemptSwitchTab(type) {
-            if (hasUnsavedData) {
-                pendingTab = type;
-                document.getElementById('warning-modal').style.display = 'flex';
-            } else {
-                executeSwitchTab(type);
-            }
 
+    if (hasUnsavedData) {
+
+        pendingTab = type;
+        document.getElementById('warning-modal').style.display = 'flex';
+
+    } else {
+
+        // data sudah disimpan → reset halaman
+        if (type === 'peta') {
+            window.location.href = "{% url 'input_lokasi' %}?tab=peta";
+        } else {
+            window.location.href = "{% url 'input_lokasi' %}?tab=koordinat";
         }
+
+    }
+}
         function confirmSwitch() {
 
             document.getElementById('warning-modal').style.display = 'none';
 
             hasUnsavedData = false;
+            window.isSaved = true;
 
             if (pendingUrl) {
 
