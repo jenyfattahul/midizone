@@ -35,10 +35,10 @@
             font-size: 14px;
         }
 
-        /* Tata Letak Grid Simetris */
+        /* Tata Letak: hasil analisis disusun bertumpuk (1 kolom) agar rapi & mudah di-scroll */
 .grid-info {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: 1fr;
         gap: 20px;
         margin-top: 20px;
         align-items: stretch;
@@ -50,7 +50,7 @@
         border: 1px solid #e5e7eb;
         border-top: 4px solid #0a6ed1;
         padding: 20px;
-        height: 100%; /* Penting untuk meratakan tinggi */
+        width: 100%;
     }
 
         .dss-container {
@@ -221,10 +221,20 @@
             </div>
 
             <div id="content-koordinat">
-                <h3>Titik Koordinat</h3>
+                <h3>Usulan Lokasi & Titik Koordinat</h3>
                 <div class="form-group">
                     <form method="GET" action="{% url 'input_lokasi' %}" onsubmit="handleSearchIntersept(event, 'btn-search-manual', 'input-koordinat');">
                         <input type="hidden" name="source" value="manual">
+                        <label style="display:block; margin-bottom:6px; font-weight:600; color:#4a5568; font-size:0.9rem;">Usulan Lokasi <span style="font-weight:400; color:#a0aec0;">(nama/label toko yang diusulkan, opsional)</span></label>
+                        <input
+                            type="text"
+                            id="input-usulan-manual"
+                            name="usulan_lokasi"
+                            placeholder="Contoh: Alfamidi Jalan Gorontalo Raya"
+                            value="{% if source == 'manual' %}{{ usulan_lokasi }}{% endif %}"
+                            style="margin-bottom:15px; width:100%;"
+                        >
+                        <label style="display:block; margin-bottom:6px; font-weight:600; color:#4a5568; font-size:0.9rem;">Titik Koordinat</label>
                         <div class="input-field-wrapper">
                             <input 
                                 type="text"
@@ -263,6 +273,7 @@
                         <div class="info-card">
                             <h4> Master Data Lokasi</h4>
                             <div class="data-row"><span class="label-data">Titik Koordinat</span><span class="value-data">{{ latitude|default:"-" }}, {{ longitude|default:"-" }}</span></div>
+                            <div class="data-row"><span class="label-data">Usulan Lokasi</span><span class="value-data">{{ usulan_lokasi|default:"-" }}</span></div>
                             <div class="data-row"><span class="label-data">Kota, Provinsi</span><span class="value-data">{{ provinsi_kota|default:"-, -" }}</span></div>
                             <div class="data-row"><span class="label-data">Nama Jalan</span><span class="value-data">{{ nama_jalan|default:"-" }}</span></div>
                             <div class="data-row"><span class="label-data">Deskripsi Rute Jalan</span><span class="value-data" style="font-weight: 500; font-style: italic; color: #444;">{{ road_types_desc }}</span></div>
@@ -271,9 +282,8 @@
 
                         <div class="info-card">
                             <h4> Analisis Demografi & Populasi</h4>
-                            <div class="data-row"><span class="label-data">Kepadatan Penduduk (2020)</span><span class="value-data">{{ population_density_2020|default:"-" }} jiwa/km²</span></div>
-                            <div class="data-row"><span class="label-data">Total Populasi (2020)</span><span class="value-data">{{ population_2020|default:"-" }} jiwa</span></div>
-                            <div class="data-row"><span class="label-data">Proyeksi Penduduk (2026)</span><span class="value-data">{{ population_2026|default:"-" }} jiwa</span></div>
+                            <div class="data-row"><span class="label-data">Kepadatan Penduduk (2026)</span><span class="value-data">{{ population_density_2026|default:"-" }} jiwa/km²</span></div>
+                            <div class="data-row"><span class="label-data">Total Populasi (2026)</span><span class="value-data">{{ population_2026|default:"-" }} jiwa</span></div>
                             <div class="data-row"><span class="label-data">Kategori Kepadatan</span><span class="value-data" style="text-transform: uppercase;">{{ population_category|default:"-" }}</span></div>
                         </div>
 
@@ -359,10 +369,20 @@
                     <div id="map" style="height: 350px; width: 100%; border-radius: 4px; border: 1px solid #dcdcdc;"></div>
                 </div>
 
-                <h3>Titik Koordinat yang di Pilih</h3>
+                <h3>Usulan Lokasi & Titik Koordinat yang di Pilih</h3>
                 <div class="form-group">
                     <form method="GET" action="{% url 'input_lokasi' %}" onsubmit="handleSearchIntersept(event, 'btn-search-peta', 'coord-output');">
                         <input type="hidden" name="source" value="map">
+                        <label style="display:block; margin-bottom:6px; font-weight:600; color:#4a5568; font-size:0.9rem;">Usulan Lokasi <span style="font-weight:400; color:#a0aec0;">(nama/label toko yang diusulkan, opsional)</span></label>
+                        <input
+                            type="text"
+                            id="input-usulan-peta"
+                            name="usulan_lokasi"
+                            placeholder="Contoh: Alfamidi Jalan Gorontalo Raya"
+                            value="{% if source == 'map' %}{{ usulan_lokasi }}{% endif %}"
+                            style="margin-bottom:15px; width:100%;"
+                        >
+                        <label style="display:block; margin-bottom:6px; font-weight:600; color:#4a5568; font-size:0.9rem;">Titik Koordinat</label>
                         <div class="input-field-wrapper">
                             <input type="text" id="coord-output" name="koordinat" readonly placeholder="Klik pada peta untuk koordinat" required
                                 value="{% if source == 'map' %}{{ koordinat }}{% endif %}"
@@ -388,6 +408,7 @@
                         <div class="info-card">
                             <h4><i class="fas fa-info-circle"></i> Master Data Lokasi</h4>
                             <div class="data-row"><span class="label-data">Titik Koordinat</span><span class="value-data" style="color: #0056b3;">{{ latitude|default:"-" }}, {{ longitude|default:"-" }}</span></div>
+                            <div class="data-row"><span class="label-data">Usulan Lokasi</span><span class="value-data" style="color: #0056b3;">{{ usulan_lokasi|default:"-" }}</span></div>
                             <div class="data-row"><span class="label-data">Kota, Provinsi</span><span class="value-data">{{ provinsi_kota|default:"-, -" }}</span></div>
                             <div class="data-row"><span class="label-data">Nama Jalan</span><span class="value-data">{{ nama_jalan|default:"-" }}</span></div>
                             <div class="data-row"><span class="label-data">Deskripsi Rute Jalan</span><span class="value-data" style="font-weight: 500; font-style: italic; color: #444;">{{ road_types_desc }}</span></div>
@@ -396,9 +417,8 @@
 
                         <div class="info-card">
                             <h4><i class="fas fa-users"></i> Analisis Demografi & Populasi</h4>
-                            <div class="data-row"><span class="label-data">Kepadatan Penduduk (2020)</span><span class="value-data">{{ population_density_2020|default:"-" }} jiwa/km²</span></div>
-                            <div class="data-row"><span class="label-data">Total Populasi (2020)</span><span class="value-data">{{ population_2020|default:"-" }} jiwa</span></div>
-                            <div class="data-row"><span class="label-data">Proyeksi Penduduk (2026)</span><span class="value-data" style="color: #007bff;">{{ population_2026|default:"-" }} jiwa</span></div>
+                            <div class="data-row"><span class="label-data">Kepadatan Penduduk (2026)</span><span class="value-data">{{ population_density_2026|default:"-" }} jiwa/km²</span></div>
+                            <div class="data-row"><span class="label-data">Total Populasi (2026)</span><span class="value-data">{{ population_2026|default:"-" }} jiwa</span></div>
                             <div class="data-row"><span class="label-data">Kategori Kepadatan</span><span class="value-data" style="text-transform: uppercase;">{{ population_category|default:"-" }}</span></div>
                         </div>
 
@@ -558,6 +578,7 @@
             latitude: "{{ latitude }}",
             longitude: "{{ longitude }}",
             address: "{{ nama_jalan }}, {{ provinsi_kota }}",
+            usulan_lokasi: "{{ usulan_lokasi|default:'' }}",
             road_types_desc: "{{ road_types_desc }}",
             intersection_count: "{{ intersection_count }}",
             region: "{{ wilayah_ml }}",

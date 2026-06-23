@@ -37,12 +37,12 @@
 
     <div class="section-header">DATA LOKASI & DEMOGRAFI</div>
     <table>
-        <tr><td width="20%"><strong>Koordinat</strong></td><td width="30%">{{ analysis.location.latitude }}, {{ analysis.location.longitude }}</td>
-            <td width="20%"><strong>Populasi (2020)</strong></td><td width="30%">{{ demography.population_2020 }} jiwa</td></tr>
-        <tr><td><strong>Alamat</strong></td><td>{{ analysis.location.address }}</td>
-            <td><strong>Proyeksi (2026)</strong></td><td>{{ demography.population_2026 }} jiwa</td></tr>
-        <tr><td><strong>Kepadatan</strong></td><td>{{ demography.population_density }} jiwa/km²</td>
-            <td><strong>Kategori</strong></td><td>{{ demography.population_category|upper }}</td></tr>
+        <tr><td width="20%"><strong>Koordinat</strong></td><td colspan="3">{{ analysis.location.latitude }}, {{ analysis.location.longitude }}</td></tr>
+        <tr><td><strong>Usulan Lokasi</strong></td><td colspan="3">{{ usulan_lokasi|default:"-" }}</td></tr>
+        <tr><td><strong>Alamat</strong></td><td colspan="3">{{ analysis.location.address }}</td></tr>
+        <tr><td width="20%"><strong>Kepadatan (2026)</strong></td><td width="30%">{{ demography.population_density }} jiwa/km²</td>
+            <td width="20%"><strong>Proyeksi (2026)</strong></td><td width="30%">{{ demography.population_2026 }} jiwa</td></tr>
+        <tr><td><strong>Kategori</strong></td><td colspan="3">{{ demography.population_category|upper }}</td></tr>
     </table>
 
     <div class="flex-container">
@@ -74,10 +74,19 @@
     <div style="clear: both;"></div>
 
     <div class="section-header">ANALISIS KEPUTUSAN (DSS)</div>
-    <div class="summary-box">
+    <div class="summary-box" style="margin-bottom: 10px;">
         <strong>Status:</strong> {{ model.feasibility_prediction|upper }} | 
         <strong>Confidence:</strong> {{ model.confidence_score }}% | 
         <strong>Traffic Estimation:</strong> {{ model.traffic_category_prediction|upper }}
+    </div>
+
+    <div class="section-header">PETA LOKASI</div>
+    <div style="text-align: center; margin-bottom: 10px;">
+        {% if map_image_url %}
+        <img src="{{ map_image_url }}" style="width: 100%; max-width: 600px; border: 1px solid #999;" />
+        {% else %}
+        <div class="summary-box" style="text-align:center;">Peta lokasi tidak tersedia</div>
+        {% endif %}
     </div>
 </body>
 </html>

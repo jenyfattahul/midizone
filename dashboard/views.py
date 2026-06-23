@@ -15,7 +15,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.template.loader import render_to_string
 
 # Import services
-from .services.gmaps_service import get_poi_competitor
+from .services.gmaps_service import get_poi_competitor, API_KEY as GMAPS_API_KEY
 from .services.osm_service import process_road_features
 from .services.population_service import get_population_data
 from .services.traffic_pipeline import analyze_traffic_pipeline
@@ -101,6 +101,108 @@ def clean_float(val):
         return float(str(val).replace(",", ".").strip())
     except:
         return 0.0
+
+
+def build_map_image_base64(lat, lon, zoom=15, width=600, height=300):
+    """
+    Generate a map image for PDF reports as a base64 data URI.
+    Uses OSM tiles (no API key required) via staticmap library with a proper User-Agent.
+    Falls back to a clean SVG illustration if tiles cannot be fetched.
+    """
+    import base64 as _b64
+    import io as _io
+
+    # --- Strategy 1: OSM tiles via staticmap (no API key needed) ---
+    try:
+        import requests as _req
+        from staticmap import StaticMap, CircleMarker
+
+        # OSM policy requires a meaningful User-Agent
+        session = _req.Session()
+        session.headers.update({
+            "User-Agent": "MidiZone/1.0 PT-Midi-Utama-Indonesia site-feasibility-tool"
+        })
+
+        tile_servers = [
+            "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+            "https://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
+            "https://b.tile.openstreetmap.org/{z}/{x}/{y}.png",
+            "https://c.tile.openstreetmap.org/{z}/{x}/{y}.png",
+            "https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png",
+            "https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
+        ]
+
+        for tile_url in tile_servers:
+            try:
+                m = StaticMap(width, height, url_template=tile_url)
+                m._session = session          # inject session with User-Agent
+                marker = CircleMarker((float(lon), float(lat)), "#e74c3c", 14)
+                m.add_marker(marker)
+                img = m.render(zoom=zoom)
+                buf = _io.BytesIO()
+                img.save(buf, format="PNG")
+                b64 = _b64.b64encode(buf.getvalue()).decode()
+                return f"data:image/png;base64,{b64}"
+            except Exception:
+                continue
+    except Exception:
+        pass
+
+    # --- Strategy 2: SVG map illustration (fully offline, no dependency) ---
+    svg = f"""<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#c8dce8" stroke-width="0.6"/>
+    </pattern>
+  </defs>
+  <!-- Background -->
+  <rect width="{width}" height="{height}" fill="#ddeeff"/>
+  <rect width="{width}" height="{height}" fill="url(#grid)"/>
+  <!-- Simulated blocks -->
+  <rect x="20" y="20" width="120" height="80" rx="3" fill="#c8dce8" opacity="0.6"/>
+  <rect x="160" y="20" width="80" height="80" rx="3" fill="#c8dce8" opacity="0.5"/>
+  <rect x="260" y="20" width="100" height="80" rx="3" fill="#c8dce8" opacity="0.6"/>
+  <rect x="380" y="20" width="80" height="80" rx="3" fill="#c8dce8" opacity="0.5"/>
+  <rect x="480" y="20" width="100" height="80" rx="3" fill="#c8dce8" opacity="0.6"/>
+  <rect x="20" y="180" width="100" height="100" rx="3" fill="#c8dce8" opacity="0.5"/>
+  <rect x="140" y="180" width="120" height="100" rx="3" fill="#c8dce8" opacity="0.6"/>
+  <rect x="280" y="180" width="80" height="100" rx="3" fill="#c8dce8" opacity="0.5"/>
+  <rect x="380" y="180" width="100" height="100" rx="3" fill="#c8dce8" opacity="0.6"/>
+  <rect x="500" y="180" width="80" height="100" rx="3" fill="#c8dce8" opacity="0.5"/>
+  <!-- Main roads -->
+  <rect x="0" y="116" width="{width}" height="48" fill="#f5f5f0"/>
+  <line x1="0" y1="140" x2="{width}" y2="140" stroke="#ffd700" stroke-width="1.5" stroke-dasharray="12,8"/>
+  <rect x="246" y="0" width="48" height="{height}" fill="#f5f5f0"/>
+  <line x1="270" y1="0" x2="270" y2="{height}" stroke="#ffd700" stroke-width="1" stroke-dasharray="10,7"/>
+  <!-- Secondary roads -->
+  <rect x="0" y="100" width="{width}" height="6" fill="#e8e8e2" opacity="0.7"/>
+  <rect x="0" y="174" width="{width}" height="6" fill="#e8e8e2" opacity="0.7"/>
+  <rect x="136" y="0" width="6" height="{height}" fill="#e8e8e2" opacity="0.7"/>
+  <rect x="396" y="0" width="6" height="{height}" fill="#e8e8e2" opacity="0.7"/>
+  <!-- Location pin at center -->
+  <circle cx="270" cy="140" r="18" fill="#e74c3c" opacity="0.95"/>
+  <circle cx="270" cy="140" r="9" fill="white"/>
+  <polygon points="270,162 262,175 278,175" fill="#e74c3c" opacity="0.95"/>
+  <!-- Info box -->
+  <rect x="330" y="108" width="260" height="64" rx="5" fill="white" opacity="0.9" stroke="#bbb"/>
+  <text x="346" y="128" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333" font-weight="bold">Titik Lokasi Kandidat</text>
+  <text x="346" y="146" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#555">Lat: {lat}</text>
+  <text x="346" y="162" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#555">Lon: {lon}</text>
+  <!-- OSM attribution -->
+  <rect x="0" y="{height-16}" width="{width}" height="16" fill="white" opacity="0.7"/>
+  <text x="{width-5}" y="{height-4}" font-family="Helvetica,Arial,sans-serif" font-size="7" fill="#777" text-anchor="end">© OpenStreetMap contributors</text>
+</svg>"""
+    b64 = _b64.b64encode(svg.encode("utf-8")).decode()
+    return f"data:image/svg+xml;base64,{b64}"
+
+
+def build_static_map_url(lat, lon, zoom=15, size="600x300"):
+    """Wrapper that calls build_map_image_base64 — kept for backward compatibility."""
+    try:
+        w, h = (int(x) for x in size.split("x"))
+    except Exception:
+        w, h = 600, 300
+    return build_map_image_base64(lat, lon, zoom=zoom, width=w, height=h)
 
 
 from django.db.models import Avg
@@ -282,6 +384,7 @@ def detail_riwayat_partial(request, analysis_id):
         "latitude": analysis.location.latitude,
         "longitude": analysis.location.longitude,
         "nama_jalan": analysis.location.address,
+        "usulan_lokasi": analysis.location.proposed_name or "-",
         "provinsi_kota": analysis.region,
         "road_types_desc": analysis.road_type,
         "intersection_count": analysis.intersection_count,
@@ -294,9 +397,11 @@ def detail_riwayat_partial(request, analysis_id):
 def input_lokasi(request):
     source = request.GET.get("source", "manual")
     koordinat = request.GET.get("koordinat", "")
+    usulan_lokasi = request.GET.get("usulan_lokasi", "").strip()
     context = {
         "source": source,
         "koordinat": koordinat,
+        "usulan_lokasi": usulan_lokasi,
         "poi_data": {},
         "competitor_data": {},
         "summary_data": {},
@@ -590,6 +695,9 @@ def input_lokasi(request):
                     "population_density_2020": pop_data.get(
                         "population_density_2020", "-"
                     ),
+                    "population_density_2026": pop_data.get(
+                        "population_density_2026", "-"
+                    ),
                     "population_2020": pop_data.get("population_2020"),
                     "population_2026": pop_data.get("population_2026"),
                     "population_category": pop_data.get("category"),
@@ -640,8 +748,13 @@ def simpan_lokasi(request):
         lat = float(data.get("latitude", 0))
         lon = float(data.get("longitude", 0))
         alamat = data.get("address", "Nama jalan tidak terdeteksi")
+        usulan_lokasi = data.get("usulan_lokasi", "").strip() or None
         loc_obj = Location.objects.create(
-            user=user_default, latitude=lat, longitude=lon, address=alamat
+            user=user_default,
+            latitude=lat,
+            longitude=lon,
+            address=alamat,
+            proposed_name=usulan_lokasi,
         )
         tanggal = datetime.datetime.now().strftime("%Y%m%d")
         analysis_obj = SiteAnalysis.objects.create(
@@ -657,7 +770,7 @@ def simpan_lokasi(request):
         analysis_obj.save()
         AnalysisPopulation.objects.create(
             analysis=analysis_obj,
-            population_density=clean_float(data.get("population_density_2020", 0)),
+            population_density=clean_float(data.get("population_density_2026", data.get("population_density_2020", 0))),
             population_2020=clean_int(data.get("population_2020", 0)),
             population_2026=clean_int(data.get("population_2026", 0)),
             population_category=data.get("population_category", "-"),
@@ -734,6 +847,10 @@ def generate_pdf(request, analysis_id):
         "model": model,
         "list_poi": list_poi,
         "list_kompetitor": list_kompetitor,
+        "usulan_lokasi": analysis.location.proposed_name or "-",
+        "map_image_url": build_static_map_url(
+            analysis.location.latitude, analysis.location.longitude
+        ),
         "waktu_cetak": get_indonesian_date(),
     }
 
@@ -818,6 +935,10 @@ def download_pdf_bulk(request):
                     "model": model,
                     "list_poi": list_poi,
                     "list_kompetitor": list_kompetitor,
+                    "usulan_lokasi": analysis.location.proposed_name or "-",
+                    "map_image_url": build_static_map_url(
+                        analysis.location.latitude, analysis.location.longitude
+                    ),
                     "waktu_cetak": get_indonesian_date(),
                 }
 
@@ -886,6 +1007,10 @@ def preview_pdf(request, analysis_id):
         "model": model,
         "list_poi": list_poi,  # PASTIKAN ADA
         "list_kompetitor": list_kompetitor,  # PASTIKAN ADA
+        "usulan_lokasi": analysis.location.proposed_name or "-",
+        "map_image_url": build_static_map_url(
+            analysis.location.latitude, analysis.location.longitude
+        ),
         "waktu_cetak": get_indonesian_date(),
     }
 

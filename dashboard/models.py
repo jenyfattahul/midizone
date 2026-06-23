@@ -13,6 +13,9 @@ class Location(models.Model):
         max_length=15, blank=True, null=True
     )  # Tambahan H3 Index
     address = models.TextField()
+    proposed_name = models.CharField(
+        max_length=255, blank=True, null=True
+    )  # Usulan Lokasi / nama usulan toko
 
     # Tambahkan fungsi ini di bawah field address
     def get_formatted_address(self):

@@ -30,7 +30,7 @@
         /* ── STAT CARDS ── */
         .stat-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(3, 1fr);
             gap: 16px;
             margin-bottom: 24px;
         }
@@ -353,17 +353,12 @@
                 <span class="badge-sub badge-blue">semua waktu</span>
             </div>
             <div class="stat-card">
-                <div class="label">Highly recommended</div>
+                <div class="label">Layak</div>
                 <div class="value" style="color:#155724">{{ highly|default:"0" }}</div>
                 <span class="badge-sub badge-green">{{ pct_highly|default:"0" }}% dari total</span>
             </div>
             <div class="stat-card">
-                <div class="label">Considered</div>
-                <div class="value" style="color:#856404">{{ considered|default:"0" }}</div>
-                <span class="badge-sub badge-amber">{{ pct_considered|default:"0" }}% dari total</span>
-            </div>
-            <div class="stat-card">
-                <div class="label">Not recommended</div>
+                <div class="label">Tidak layak</div>
                 <div class="value" style="color:#721c24">{{ not_rec|default:"0" }}</div>
                 <span class="badge-sub badge-red">{{ pct_not_rec|default:"0" }}% dari total</span>
             </div>
@@ -379,51 +374,36 @@
                 {% if total > 0 %}
                 <div class="donut-wrap">
                     {% with circ=213.628 %}
-                    {% with seg_hr=pct_highly|floatformat:0 %}
-                    {% with seg_c=pct_considered|floatformat:0 %}
                     <svg width="100" height="100" viewBox="0 0 100 100" aria-hidden="true">
                         <circle cx="50" cy="50" r="34" fill="none" stroke="#edf2f7" stroke-width="16"/>
 
-                        <!-- Highly Recommended (hijau) -->
+                        <!-- Layak (hijau) -->
                         <circle cx="50" cy="50" r="34" fill="none" stroke="#28a745" stroke-width="16"
-                            stroke-dasharray="{{ pct_highly|floatformat:1 }} 100"
-                            stroke-dasharray="calc({{ pct_highly }} * 2.13628) calc((100 - {{ pct_highly }}) * 2.13628)"
                             transform="rotate(-90 50 50)"
                             stroke-linecap="butt"
                             style="stroke-dasharray: calc({{ pct_highly }} * 2.136) calc((100 - {{ pct_highly }}) * 2.136);"
                         />
-                        <!-- Considered (kuning) -->
-                        <circle cx="50" cy="50" r="34" fill="none" stroke="#ffc107" stroke-width="16"
-                            transform="rotate(-90 50 50)"
-                            stroke-linecap="butt"
-                            style="stroke-dasharray: calc({{ pct_considered }} * 2.136) calc((100 - {{ pct_considered }}) * 2.136); stroke-dashoffset: calc(-{{ pct_highly }} * 2.136);"
-                        />
-                        <!-- Not Recommended (merah) -->
+                        <!-- Tidak Layak (merah) -->
                         <circle cx="50" cy="50" r="34" fill="none" stroke="#dc3545" stroke-width="16"
                             transform="rotate(-90 50 50)"
                             stroke-linecap="butt"
-                            style="stroke-dasharray: calc({{ pct_not_rec }} * 2.136) calc((100 - {{ pct_not_rec }}) * 2.136); stroke-dashoffset: calc(-({{ pct_highly }} + {{ pct_considered }}) * 2.136);"
+                            style="stroke-dasharray: calc({{ pct_not_rec }} * 2.136) calc((100 - {{ pct_not_rec }}) * 2.136); stroke-dashoffset: calc(-{{ pct_highly }} * 2.136);"
                         />
 
                         <text x="50" y="46" text-anchor="middle" font-size="14" font-weight="700" fill="#1a2b49">{{ total }}</text>
                         <text x="50" y="59" text-anchor="middle" font-size="8" fill="#8a94a6">analisis</text>
                     </svg>
-                    {% endwith %}{% endwith %}{% endwith %}
+                    {% endwith %}
 
                     <div class="legend-list">
                         <div class="legend-item">
                             <div class="legend-dot" style="background:#28a745;"></div>
-                            Highly recommended
+                            Layak
                             <span class="count">{{ highly }}</span>
                         </div>
                         <div class="legend-item">
-                            <div class="legend-dot" style="background:#ffc107;"></div>
-                            Considered
-                            <span class="count">{{ considered }}</span>
-                        </div>
-                        <div class="legend-item">
                             <div class="legend-dot" style="background:#dc3545;"></div>
-                            Not recommended
+                            Tidak layak
                             <span class="count">{{ not_rec }}</span>
                         </div>
                     </div>
@@ -502,21 +482,15 @@
         <!-- ── PETA SEBARAN (hemat API) ── -->
         <div class="map-section">
             <div class="map-section-head">
-                <h4><i class="fas fa-map-marked-alt"></i> Sebaran titik analisis</h4>
+                <h4><i class="fas fa-map-marked-alt"></i> Sebaran titik analisis (Layak &amp; Tidak Layak)</h4>
                 <button class="btn btn-primary" id="btn-buka-peta" onclick="bukaPeta()">
                     <i class="fas fa-map"></i> Buka peta interaktif
                 </button>
             </div>
 
-            <div class="map-eco-banner">
-                <i class="fas fa-leaf"></i>
-                Mode hemat API aktif &mdash; peta interaktif hanya dimuat saat kamu klik tombol di atas.
-                Menggunakan <strong>Leaflet.js + OpenStreetMap</strong> (gratis, 0 biaya API).
-            </div>
-
             <!-- Tabel ringkas sebagai default (0 API call) -->
             <div id="peta-placeholder">
-                {% if titik_peta %}
+                {% if titik_peta_filtered %}
                 <div style="overflow-x:auto;">
                     <table class="data-table" style="font-size:13px;">
                         <thead>
@@ -528,18 +502,16 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for titik in titik_peta %}
+                            {% for titik in titik_peta_filtered %}
                             <tr>
                                 <td>{{ forloop.counter }}</td>
                                 <td>{{ titik.nama_jalan }}</td>
                                 <td style="font-family:monospace;font-size:11px;">{{ titik.latitude }}, {{ titik.longitude }}</td>
                                 <td>
                                     {% if titik.rekomendasi == 'Highly Recommended' %}
-                                        <span class="badge-sub badge-green">Highly Recommended</span>
-                                    {% elif titik.rekomendasi == 'Considered' %}
-                                        <span class="badge-sub badge-amber">Considered</span>
+                                        <span class="badge-sub badge-green">Layak</span>
                                     {% else %}
-                                        <span class="badge-sub badge-red">Not Recommended</span>
+                                        <span class="badge-sub badge-red">Tidak Layak</span>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -563,69 +535,28 @@
             <div class="map-legend-row">
                 <div class="map-legend-item">
                     <div class="map-legend-dot" style="background:#28a745;"></div>
-                    Highly recommended
-                </div>
-                <div class="map-legend-item">
-                    <div class="map-legend-dot" style="background:#ffc107;"></div>
-                    Considered
+                    Layak
                 </div>
                 <div class="map-legend-item">
                     <div class="map-legend-dot" style="background:#dc3545;"></div>
-                    Not recommended
+                    Tidak layak
                 </div>
             </div>
         </div>
 
-        <!-- ── BARIS BAWAH: Zona + Riwayat ── -->
+        <!-- ── BARIS BAWAH: Riwayat terbaru ── -->
         <div class="main-grid">
 
-            <!-- Breakdown zona ML -->
-            <div class="dash-card">
-                <h4><i class="fas fa-layer-group"></i> Breakdown zona model ML</h4>
-
-                <div class="zona-grid">
-                    <div class="zona-card jabo">
-                        <div class="zlabel">Jabodetabek</div>
-                        <div class="zval">{{ jabo }}</div>
-                        <div class="zsub">threshold 110 &ndash; 175</div>
-                    </div>
-                    <div class="zona-card nonjabo">
-                        <div class="zlabel">Luar Jabodetabek</div>
-                        <div class="zval">{{ luar_jabo }}</div>
-                        <div class="zsub">threshold 5.10 &ndash; 5.65</div>
-                    </div>
-                </div>
-
-                <div class="hr"></div>
-                <div class="info-row">
-                    <span class="ik">Avg. traffic score Jabodetabek</span>
-                    <span class="iv">{{ avg_traffic_jabo }}</span>
-                </div>
-                <div class="info-row">
-                    <span class="ik">Avg. traffic score luar Jabo</span>
-                    <span class="iv">{{ avg_traffic_non_jabo }}</span>
-                </div>
-
-                <div class="hr"></div>
-                <div style="text-align:center;margin-top:6px;">
-                    <a href="{% url 'riwayat' %}" class="btn btn-secondary" style="display:inline-flex;gap:8px;justify-content:center;">
-                        <i class="fas fa-history"></i> Lihat semua riwayat
-                    </a>
-                </div>
-            </div>
-
             <!-- 5 analisis terbaru -->
-            <div class="dash-card">
+            <div class="dash-card" style="grid-column: 1 / -1;">
                 <h4><i class="fas fa-clock"></i> Analisis terbaru</h4>
 
                 {% if terbaru %}
                     {% for item in terbaru %}
                     <div class="riwayat-row">
-                        <div class="ric {% if item.rekomendasi == 'Highly Recommended' %}g{% elif item.rekomendasi == 'Considered' %}a{% else %}r{% endif %}">
+                        <div class="ric {% if item.rekomendasi == 'Highly Recommended' %}g{% else %}r{% endif %}">
                             {% if item.rekomendasi == 'Highly Recommended' %}
                                 <i class="fas fa-check"></i>
-                            {% elif item.rekomendasi == 'Considered' %}
-                                <i class="fas fa-minus"></i>
                             {% else %}
                                 <i class="fas fa-times"></i>
                             {% endif %}
@@ -639,11 +570,9 @@
                             </div>
                         </div>
                         {% if item.rekomendasi == 'Highly Recommended' %}
-                            <span class="badge-sub badge-green">Highly Rec.</span>
-                        {% elif item.rekomendasi == 'Considered' %}
-                            <span class="badge-sub badge-amber">Considered</span>
+                            <span class="badge-sub badge-green">Layak</span>
                         {% else %}
-                            <span class="badge-sub badge-red">Not Rec.</span>
+                            <span class="badge-sub badge-red">Tidak Layak</span>
                         {% endif %}
                     </div>
                     {% endfor %}
@@ -668,7 +597,7 @@
         var petaSudahDimuat = false;
 
         var titikData = [
-            {% for titik in titik_peta %}
+            {% for titik in titik_peta_filtered %}
             {
                 lat: {{ titik.latitude }},
                 lon: {{ titik.longitude }},
@@ -734,12 +663,12 @@
 
             var warna = {
                 'Highly Recommended': '#28a745',
-                'Considered':         '#ffc107',
                 'Not Recommended':    '#dc3545'
             };
 
             titikData.forEach(function(t) {
                 var w = warna[t.rec] || '#6c757d';
+                var labelRec = (t.rec === 'Highly Recommended') ? 'Layak' : 'Tidak Layak';
                 var marker = L.circleMarker([t.lat, t.lon], {
                     radius:      9,
                     color:       'white',
@@ -750,7 +679,7 @@
 
                 marker.bindPopup(
                     '<strong>' + t.nama + '</strong><br>' +
-                    '<span style="color:' + w + ';font-weight:bold;">' + t.rec + '</span><br>' +
+                    '<span style="color:' + w + ';font-weight:bold;">' + labelRec + '</span><br>' +
                     '<small>' + t.lat.toFixed(5) + ', ' + t.lon.toFixed(5) + '</small>'
                 );
             });

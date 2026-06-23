@@ -12,14 +12,14 @@ DATA_DIR = os.path.join(BASE_DIR, 'data')
 # 2. LOAD SEMUA ASSET (Jabodetabek & Non-Jabodetabek)
 try:
     # Asset Jabodetabek
-    model_jabo = joblib.load(os.path.join(DATA_DIR, "traffic_model.pkl"))
-    features_jabo = joblib.load(os.path.join(DATA_DIR, "feature_columns.pkl"))
-    thresholds_jabo = joblib.load(os.path.join(DATA_DIR, "traffic_thresholds.pkl"))
+    model_jabo = joblib.load(os.path.join(DATA_DIR, "traffic_model (2).pkl"))
+    features_jabo = joblib.load(os.path.join(DATA_DIR, "feature_columns (1).pkl"))
+    thresholds_jabo = joblib.load(os.path.join(DATA_DIR, "traffic_thresholds (1).pkl"))
     
     # Asset Non-Jabodetabek
-    model_non_jabo = joblib.load(os.path.join(DATA_DIR, "traffic_model_non_jabodetabek (1).pkl"))
-    features_non_jabo = joblib.load(os.path.join(DATA_DIR, "feature_columns_non_jabodetabek.pkl"))
-    thresholds_non_jabo = joblib.load(os.path.join(DATA_DIR, "traffic_threshold_non_jabodetabek.pkl"))
+    model_non_jabo = joblib.load(os.path.join(DATA_DIR, "traffic_model (3).pkl"))
+    features_non_jabo = joblib.load(os.path.join(DATA_DIR, "feature_columns (2).pkl"))
+    thresholds_non_jabo = joblib.load(os.path.join(DATA_DIR, "traffic_threshold (2).pkl"))
     
     print("✅ Berhasil memuat seluruh model Jabodetabek & Non-Jabodetabek!")
 except Exception as e:

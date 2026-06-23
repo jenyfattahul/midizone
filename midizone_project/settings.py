@@ -81,9 +81,9 @@ DATABASES = {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": "midizone",
         "USER": "postgres",
-        "PASSWORD": "H09soob",
-        "HOST": "",
-        "PORT": "",
+        "PASSWORD": "Admin123",
+        "HOST": "localhost",
+        "PORT": "5432",
     }
 }
 
