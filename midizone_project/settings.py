@@ -79,9 +79,9 @@ WSGI_APPLICATION = "midizone_project.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "midizone",
+        "NAME": "",
         "USER": "postgres",
-        "PASSWORD": "H09soob",
+        "PASSWORD": "",
         "HOST": "",
         "PORT": "",
     }
@@ -130,7 +130,7 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-GOOGLE_MAPS_API_KEY = "AIzaSyBmPcCht7S9Y5p2ycWrqKiGLrEBoXUKyYY"
+GOOGLE_MAPS_API_KEY = ""
 
 LOGIN_REDIRECT_URL = "dashboard"
 LOGOUT_REDIRECT_URL = "login"
