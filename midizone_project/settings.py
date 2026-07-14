@@ -79,9 +79,9 @@ WSGI_APPLICATION = "midizone_project.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "",
+        "NAME": "", # add here
         "USER": "postgres",
-        "PASSWORD": "",
+        "PASSWORD": "", # add here
         "HOST": "",
         "PORT": "",
     }
@@ -130,11 +130,10 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-GOOGLE_MAPS_API_KEY = ""
+GOOGLE_MAPS_API_KEY = "" # add here
 
 LOGIN_REDIRECT_URL = "dashboard"
 LOGOUT_REDIRECT_URL = "login"
 
-# Di settings.py
 X_FRAME_OPTIONS = "SAMEORIGIN"
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
