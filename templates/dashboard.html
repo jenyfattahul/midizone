@@ -490,7 +490,7 @@
 
             <!-- Tabel ringkas sebagai default (0 API call) -->
             <div id="peta-placeholder">
-                {% if titik_peta_filtered %}
+                {% if titik_peta %}
                 <div style="overflow-x:auto;">
                     <table class="data-table" style="font-size:13px;">
                         <thead>
@@ -502,7 +502,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for titik in titik_peta_filtered %}
+                            {% for titik in titik_peta %}
                             <tr>
                                 <td>{{ forloop.counter }}</td>
                                 <td>{{ titik.nama_jalan }}</td>
@@ -597,7 +597,7 @@
         var petaSudahDimuat = false;
 
         var titikData = [
-            {% for titik in titik_peta_filtered %}
+            {% for titik in titik_peta %}
             {
                 lat: {{ titik.latitude }},
                 lon: {{ titik.longitude }},

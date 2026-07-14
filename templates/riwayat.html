@@ -187,13 +187,18 @@
             };
             document.querySelectorAll("#tableBody tr").forEach(row => {
                 let text = row.innerText.toLowerCase();
+                // NOTE: kolom Status sengaja pakai startsWith(), bukan includes().
+                // Kalau pakai includes(), mengetik "layak" akan ikut mencocokkan
+                // "TIDAK LAYAK" juga (karena "layak" adalah substring dari
+                // "tidak layak"), sehingga filter Status terasa "tidak berfungsi".
+                let statusText = (row.querySelector('.col-status')?.innerText || '').trim().toLowerCase();
                 let match = text.includes(filters.search) &&
                             row.querySelector('.col-doc')?.innerText.toLowerCase().includes(filters.doc) &&
                             row.querySelector('.col-date')?.innerText.toLowerCase().includes(filters.date) &&
                             row.querySelector('.col-addr')?.innerText.toLowerCase().includes(filters.addr) &&
                             row.querySelector('.col-coord')?.innerText.toLowerCase().includes(filters.coord) &&
                             row.querySelector('.col-region')?.innerText.toLowerCase().includes(filters.region) &&
-                            row.querySelector('.col-status')?.innerText.toLowerCase().includes(filters.status);
+                            statusText.startsWith(filters.status);
                 row.style.display = match ? "" : "none";
             });
         }

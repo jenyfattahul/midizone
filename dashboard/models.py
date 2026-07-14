@@ -9,9 +9,6 @@ class Location(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="locations")
     latitude = models.FloatField()
     longitude = models.FloatField()
-    h3_index = models.CharField(
-        max_length=15, blank=True, null=True
-    )  # Tambahan H3 Index
     address = models.TextField()
     proposed_name = models.CharField(
         max_length=255, blank=True, null=True

@@ -4,7 +4,6 @@ import datetime
 import joblib
 import pandas as pd
 from geopy.geocoders import Nominatim
-import h3
 from weasyprint import HTML
 
 from django.contrib.auth.models import User
@@ -119,9 +118,9 @@ def build_map_image_base64(lat, lon, zoom=15, width=600, height=300):
 
         # OSM policy requires a meaningful User-Agent
         session = _req.Session()
-        session.headers.update({
-            "User-Agent": "MidiZone/1.0 PT-Midi-Utama-Indonesia site-feasibility-tool"
-        })
+        session.headers.update(
+            {"User-Agent": "MidiZone/1.0 PT-Midi-Utama-Indonesia site-feasibility-tool"}
+        )
 
         tile_servers = [
             "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
@@ -135,7 +134,7 @@ def build_map_image_base64(lat, lon, zoom=15, width=600, height=300):
         for tile_url in tile_servers:
             try:
                 m = StaticMap(width, height, url_template=tile_url)
-                m._session = session          # inject session with User-Agent
+                m._session = session  # inject session with User-Agent
                 marker = CircleMarker((float(lon), float(lat)), "#e74c3c", 14)
                 m.add_marker(marker)
                 img = m.render(zoom=zoom)
@@ -189,8 +188,8 @@ def build_map_image_base64(lat, lon, zoom=15, width=600, height=300):
   <text x="346" y="146" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#555">Lat: {lat}</text>
   <text x="346" y="162" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#555">Lon: {lon}</text>
   <!-- OSM attribution -->
-  <rect x="0" y="{height-16}" width="{width}" height="16" fill="white" opacity="0.7"/>
-  <text x="{width-5}" y="{height-4}" font-family="Helvetica,Arial,sans-serif" font-size="7" fill="#777" text-anchor="end">© OpenStreetMap contributors</text>
+  <rect x="0" y="{height - 16}" width="{width}" height="16" fill="white" opacity="0.7"/>
+  <text x="{width - 5}" y="{height - 4}" font-family="Helvetica,Arial,sans-serif" font-size="7" fill="#777" text-anchor="end">© OpenStreetMap contributors</text>
 </svg>"""
     b64 = _b64.b64encode(svg.encode("utf-8")).decode()
     return f"data:image/svg+xml;base64,{b64}"
@@ -415,7 +414,6 @@ def input_lokasi(request):
         "intersection_count": 0,
         "status_kelayakan": "LAYAK",
         "confidence_score": 87,
-        "h3_polygon_json": "[]",
         "poi_markers_json": "[]",
     }
 
@@ -531,23 +529,33 @@ def input_lokasi(request):
                 "is_main_road": is_main_road,
                 "road_types": road_types_list,
             }
-            ml_results = (
-                analyze_traffic_pipeline(
-                    lat=lat, lon=lon, feature_source_data=scraped_features
+            try:
+                ml_results = (
+                    analyze_traffic_pipeline(
+                        lat=lat, lon=lon, feature_source_data=scraped_features
+                    )
+                    or {}
                 )
-                or {}
-            )
-            h3_idx = (
-                h3.latlng_to_cell(lat, lon, 9)
-                if hasattr(h3, "latlng_to_cell")
-                else h3.geo_to_h3(lat, lon, 9)
-            )
-            h3_boundaries = (
-                h3.cell_to_boundary(h3_idx)
-                if hasattr(h3, "cell_to_boundary")
-                else h3.h3_to_geo_boundary(h3_idx)
-            )
-            h3_polygon_matrix = [[float(b[0]), float(b[1])] for b in h3_boundaries]
+            except Exception as traffic_error:
+                # PENTING: sebelumnya call ini tidak dibungkus try/except sendiri,
+                # jadi kalau pipeline traffic error, exception-nya akan lolos ke
+                # except besar di bawah (baris ~719) dan MEMBATALKAN seluruh
+                # proses analisis (termasuk prediksi kelayakan LAYAK/TIDAK LAYAK
+                # yang sebenarnya tidak tergantung pada model traffic ini).
+                print(f"⚠️ analyze_traffic_pipeline gagal dipanggil: {traffic_error}")
+                from .services.traffic_pipeline import cek_apakah_jabodetabek
+
+                wilayah_fallback = (
+                    "Jabodetabek"
+                    if cek_apakah_jabodetabek(lat, lon)
+                    else "Luar Jabodetabek"
+                )
+                ml_results = {
+                    "wilayah_terdeteksi": wilayah_fallback,
+                    "traffic_score": 0,
+                    "category": "Tidak diketahui",
+                    "recommendation": "-",
+                }
 
             markers_list = []
             raw_poi = poi_competitor_data.get("poi", {})
@@ -711,7 +719,6 @@ def input_lokasi(request):
                     "recommendation_ml": ml_results.get("recommendation", "-"),
                     "status_kelayakan": status_kelayakan,
                     "confidence_score": confidence_score,
-                    "h3_polygon_json": json.dumps(h3_polygon_matrix),
                     "poi_markers_json": json.dumps(markers_list),
                     "catatan_manager": catatan_manager,
                 }
@@ -770,7 +777,11 @@ def simpan_lokasi(request):
         analysis_obj.save()
         AnalysisPopulation.objects.create(
             analysis=analysis_obj,
-            population_density=clean_float(data.get("population_density_2026", data.get("population_density_2020", 0))),
+            population_density=clean_float(
+                data.get(
+                    "population_density_2026", data.get("population_density_2020", 0)
+                )
+            ),
             population_2020=clean_int(data.get("population_2020", 0)),
             population_2026=clean_int(data.get("population_2026", 0)),
             population_category=data.get("population_category", "-"),
