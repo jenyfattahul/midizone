@@ -130,7 +130,11 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+<<<<<<< HEAD
 GOOGLE_MAPS_API_KEY = "" # add here
+=======
+GOOGLE_MAPS_API_KEY = "AIzaSyBwIvN1IBkU2k2VzCNMz4RsHA2jcXojFOY"
+>>>>>>> 2cfc197 (update dashboard dan input lokasi)
 
 LOGIN_REDIRECT_URL = "dashboard"
 LOGOUT_REDIRECT_URL = "login"

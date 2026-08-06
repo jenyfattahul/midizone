@@ -414,16 +414,16 @@
                     Belum ada data. Mulai dari Input Lokasi.
                 </div>
                 {% endif %}
-
-                <div class="hr"></div>
-                <div class="info-row">
+{% comment %} 
+                <div class="hr"></div> {% endcomment %}
+                {% comment %} <div class="info-row">
                     <span class="ik">Zona Jabodetabek</span>
                     <span class="iv">{{ jabo }} analisis</span>
                 </div>
                 <div class="info-row">
                     <span class="ik">Zona luar Jabodetabek</span>
                     <span class="iv">{{ luar_jabo }} analisis</span>
-                </div>
+                </div> {% endcomment %}
             </div>
 
             <!-- Bar chart rata-rata POI -->
@@ -439,11 +439,6 @@
                 </div>
                 {% endwith %}
                 <div class="bar-row">
-                    <span class="bar-label">Minimarket</span>
-                    <div class="bar-track"><div class="bar-fill" style="width:{% widthratio avg_minimarket 20 100 %}%;background:#28a745;max-width:100%;"></div></div>
-                    <span class="bar-val">{{ avg_minimarket }}</span>
-                </div>
-                <div class="bar-row">
                     <span class="bar-label">Bank/ATM</span>
                     <div class="bar-track"><div class="bar-fill" style="width:{% widthratio avg_bank 20 100 %}%;background:#17a2b8;max-width:100%;"></div></div>
                     <span class="bar-val">{{ avg_bank }}</span>
@@ -457,11 +452,6 @@
                     <span class="bar-label">RS/Klinik</span>
                     <div class="bar-track"><div class="bar-fill" style="width:{% widthratio avg_hospital 20 100 %}%;background:#e83e8c;max-width:100%;"></div></div>
                     <span class="bar-val">{{ avg_hospital }}</span>
-                </div>
-                <div class="bar-row">
-                    <span class="bar-label">Supermarket</span>
-                    <div class="bar-track"><div class="bar-fill" style="width:{% widthratio avg_supermarket 20 100 %}%;background:#6f42c1;max-width:100%;"></div></div>
-                    <span class="bar-val">{{ avg_supermarket }}</span>
                 </div>
                 {% else %}
                 <div style="text-align:center;padding:20px;color:#8a94a6;font-size:13px;">Belum ada data POI.</div>
