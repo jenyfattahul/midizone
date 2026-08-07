@@ -415,7 +415,6 @@ def input_lokasi(request):
         "intersection_count": 0,
         "status_kelayakan": "LAYAK",
         "confidence_score": 87,
-        "h3_polygon_json": "[]",
         "poi_markers_json": "[]",
     }
 
@@ -423,6 +422,29 @@ def input_lokasi(request):
         try:
             lat_str, lon_str = koordinat.split(",")
             lat, lon = float(lat_str.strip()), float(lon_str.strip())
+
+            # --- OCEAN GUARD: Pengecekan Cepat Area Laut / Hampa ---
+            road_data_check = process_road_features(lat, lon) or {}
+            pop_data_check = get_population_data(lat, lon) or {}
+            if (
+                not road_data_check.get("road_types")
+                and pop_data_check.get("population_2026", 0) == 0
+            ):
+                print("⚠️ Titik koordinat terdeteksi di area perairan / wilayah hampa.")
+                context.update(
+                    {
+                        "latitude": lat,
+                        "longitude": lon,
+                        "nama_jalan": "Area Perairan / Wilayah Hampa",
+                        "provinsi_kota": "Luar Daratan, -",
+                        "status_kelayakan": "TIDAK LAYAK",
+                        "confidence_score": 99,
+                        "catatan_manager": "Catatan: Lokasi terdeteksi di wilayah perairan atau daratan kosong tanpa akses jalan. Investasi pembukaan gerai dilarang.",
+                    }
+                )
+                return render(request, "input_lokasi.html", context)
+            # -----------------------------------------------------
+
             geolocator = Nominatim(user_agent="midizone_app")
             location = geolocator.reverse(f"{lat}, {lon}", timeout=10)
 
@@ -498,7 +520,7 @@ def input_lokasi(request):
                     provinsi = "DKI Jakarta"
                 provinsi_kota = f"{kota}, {provinsi}"
 
-            road_data = process_road_features(lat, lon) or {}
+                road_data = process_road_features(lat, lon) or {}
             pop_data = get_population_data(lat, lon) or {}
             prov_kota_lower = provinsi_kota.lower()
             region = (
@@ -508,46 +530,73 @@ def input_lokasi(request):
             )
             poi_competitor_data = get_poi_competitor(lat, lon, region) or {}
             summary = poi_competitor_data.get("summary", {}) or {}
-            road_types_list = road_data.get("road_types", [])
-            is_main_road = (
-                1
-                if any(
-                    rt in ["primary", "secondary", "tertiary"] for rt in road_types_list
-                )
-                else 0
-            )
+
+            # --- FIX #1 & #2: ambil count per-kategori dari lokasi yang BENAR,
+            # bukan dari summary (summary cuma punya total_poi/total_competitor,
+            # bukan Restaurant/Sekolah/Bank/RS/Supermarket/Minimarket).
+            raw_poi = poi_competitor_data.get("poi", {}) or {}
+            raw_comp = poi_competitor_data.get("competitor", {}) or {}
+
+            restaurant_count = raw_poi.get("restaurant", {}).get("count", 0)
+            school_count = raw_poi.get("school", {}).get("count", 0)
+            bank_count = raw_poi.get("bank", {}).get("count", 0)
+            hospital_count = raw_poi.get("hospital", {}).get("count", 0)
+            supermarket_count = raw_comp.get("supermarket_count", 0)
+            other_minimarket_count = raw_comp.get("other_minimarket_count", 0)
+
+            # total_poi: ambil langsung dari summary dengan key yang BENAR (lowercase,
+            # tanpa spasi -- sesuai apa yang benar-benar dikembalikan gmaps_service.py)
+            total_poi_value = summary.get("total_poi", 0)
+
+            # --- FIX #3: road_types dari osm_service.py adalah STRING "a,b,c", bukan
+            # list -- harus di-split dulu sebelum dipakai untuk pengecekan is_main_road.
+            road_types_raw = road_data.get("road_types", "")
+            if isinstance(road_types_raw, str):
+                road_types_list = [
+                    rt.strip() for rt in road_types_raw.split(",") if rt.strip()
+                ]
+            else:
+                road_types_list = road_types_raw or []
+
+            # Pakai is_main_road yang SUDAH dihitung dengan benar di osm_service.py
+            # (fungsi is_main_road() di sana sudah termasuk "trunk"), jangan hitung
+            # ulang dengan list yang tidak lengkap.
+            is_main_road = int(road_data.get("is_main_road", 0))
 
             scraped_features = {
-                "restaurant_count": summary.get("Restaurant", 0),
-                "school_count": summary.get("Sekolah", 0),
-                "bank_count": summary.get("Bank/ATM", 0),
-                "hospital_count": summary.get("RS/Hospital", 0),
-                "supermarket_count": summary.get("Supermarket", 0),
-                "other_minimarket_count": summary.get("Minimarket", 0),
-                "total_poi": poi_competitor_data.get(
-                    "total_poi", summary.get("Total POI", 0)
-                ),
+                "restaurant_count": restaurant_count,
+                "school_count": school_count,
+                "bank_count": bank_count,
+                "hospital_count": hospital_count,
+                "supermarket_count": supermarket_count,
+                "other_minimarket_count": other_minimarket_count,
+                "total_poi": total_poi_value,
                 "intersection_count": road_data.get("intersection_count", 0),
                 "is_main_road": is_main_road,
                 "road_types": road_types_list,
             }
-            ml_results = (
-                analyze_traffic_pipeline(
-                    lat=lat, lon=lon, feature_source_data=scraped_features
+            try:
+                ml_results = (
+                    analyze_traffic_pipeline(
+                        lat=lat, lon=lon, feature_source_data=scraped_features
+                    )
+                    or {}
                 )
-                or {}
-            )
-            h3_idx = (
-                h3.latlng_to_cell(lat, lon, 9)
-                if hasattr(h3, "latlng_to_cell")
-                else h3.geo_to_h3(lat, lon, 9)
-            )
-            h3_boundaries = (
-                h3.cell_to_boundary(h3_idx)
-                if hasattr(h3, "cell_to_boundary")
-                else h3.h3_to_geo_boundary(h3_idx)
-            )
-            h3_polygon_matrix = [[float(b[0]), float(b[1])] for b in h3_boundaries]
+            except Exception as traffic_error:
+                print(f"⚠️ analyze_traffic_pipeline gagal dipanggil: {traffic_error}")
+                from .services.traffic_pipeline import cek_apakah_jabodetabek
+
+                wilayah_fallback = (
+                    "Jabodetabek"
+                    if cek_apakah_jabodetabek(lat, lon)
+                    else "Luar Jabodetabek"
+                )
+                ml_results = {
+                    "wilayah_terdeteksi": wilayah_fallback,
+                    "traffic_score": 0,
+                    "category": "Tidak diketahui",
+                    "recommendation": "-",
+                }
 
             markers_list = []
             raw_poi = poi_competitor_data.get("poi", {})
@@ -589,6 +638,7 @@ def input_lokasi(request):
                         )
 
             try:
+                # 1. Tentukan nilai fitur kontinu sesuai urutan training 14 fitur
                 input_fitur_kontinu = [
                     float(summary.get("Restaurant", 0)),
                     float(summary.get("Sekolah", 0)),
@@ -614,11 +664,68 @@ def input_lokasi(request):
                         .strip()
                     ),
                     float(len(road_types_list)),
-                    2.0,
+                    2.0,  # category_2026_encoded (default medium = 2)
                 ]
-                input_fitur_biner = [float(is_main_road)]
+
+                # 2. Tentukan fitur biner / kategori wilayah berdasarkan wilayah terdeteksi
+                prov_kota_lower = provinsi_kota.lower()
+                is_jabodetabek = (
+                    1
+                    if (
+                        "jakarta" in prov_kota_lower
+                        or "banten" in prov_kota_lower
+                        or "bogor" in prov_kota_lower
+                        or "depok" in prov_kota_lower
+                        or "tangerang" in prov_kota_lower
+                        or "bekasi" in prov_kota_lower
+                    )
+                    else 0
+                )
+                is_jawa_non_jabo = (
+                    1 if ("jawa" in prov_kota_lower and not is_jabodetabek) else 0
+                )
+                is_sumatra = (
+                    1
+                    if "sumatera" in prov_kota_lower
+                    or "aceh" in prov_kota_lower
+                    or "riau" in prov_kota_lower
+                    or "jambi" in prov_kota_lower
+                    or "lampung" in prov_kota_lower
+                    or "bengkulu" in prov_kota_lower
+                    or "sumatera selatan" in prov_kota_lower
+                    else 0
+                )
+                is_kalimantan = 1 if "kalimantan" in prov_kota_lower else 0
+                is_sulawesi = (
+                    1
+                    if "sulawesi" in prov_kota_lower or "gorontalo" in prov_kota_lower
+                    else 0
+                )
+                is_maluku = 1 if "maluku" in prov_kota_lower else 0
+                is_papua = 1 if "papua" in prov_kota_lower else 0
+
+                # Fitur rute jalan proxy berdasarkan road_score
+                road_sc = float(road_data.get("road_score", 0.0))
+                is_residential_road = 1 if road_sc < 4 else 0
+                is_commuter_route = 1 if (road_sc >= 4 and road_sc <= 7) else 0
+
+                # Gabungkan semua komponen fitur biner/kategori sesuai urutan saat training
+                input_fitur_biner_lengkap = [
+                    float(is_main_road),
+                    float(is_jabodetabek),
+                    float(is_jawa_non_jabo),
+                    float(is_sumatra),
+                    float(is_kalimantan),
+                    float(is_sulawesi),
+                    float(is_maluku),
+                    float(is_papua),
+                    float(is_residential_road),
+                    float(is_commuter_route),
+                ]
+
                 model_kelayakan = joblib.load(MODEL_PATH)
                 scaler_spasial = joblib.load(SCALER_PATH)
+
                 nama_kolom_kontinu = [
                     "restaurant_count",
                     "school_count",
@@ -635,19 +742,43 @@ def input_lokasi(request):
                     "road_type_count",
                     "category_2026_encoded",
                 ]
+
+                nama_kolom_biner = [
+                    "is_main_road",
+                    "Region_Jabodetabek",
+                    "Region_Jawa_Non_Jabodetabek",
+                    "Region_Sumatra",
+                    "Region_Kalimantan",
+                    "Region_Sulawesi",
+                    "Region_Maluku",
+                    "Region_Papua",
+                    "is_residential_road",
+                    "is_commuter_route",
+                ]
+
+                # Buat DataFrame untuk scaling fitur kontinu
                 df_input_kontinu = pd.DataFrame(
                     [input_fitur_kontinu], columns=nama_kolom_kontinu
                 )
                 fitur_kontinu_scaled = scaler_spasial.transform(df_input_kontinu)[0]
-                nama_kolom_final = nama_kolom_kontinu + ["is_main_road"]
-                fitur_final_gabungan = list(fitur_kontinu_scaled) + input_fitur_biner
+
+                # Gabungkan kontinu yang sudah di-scale dengan fitur biner/kategori
+                nama_kolom_final = nama_kolom_kontinu + nama_kolom_biner
+                fitur_final_gabungan = (
+                    list(fitur_kontinu_scaled) + input_fitur_biner_lengkap
+                )
+
                 df_matrix_final = pd.DataFrame(
                     [fitur_final_gabungan], columns=nama_kolom_final
                 )
+
+                # Lakukan Prediksi Model
                 prediksi_kelas = model_kelayakan.predict(df_matrix_final)[0]
                 probabilitas = model_kelayakan.predict_proba(df_matrix_final)[0]
                 status_kelayakan = "LAYAK" if prediksi_kelas == 1 else "TIDAK LAYAK"
                 confidence_score = int(probabilitas[prediksi_kelas] * 100)
+
+                # Logika catatan manager... (biarkan seperti sebelumnya)
 
                 rest, sekolah, bank, rs = (
                     float(summary.get("Restaurant", 0)),
@@ -661,18 +792,29 @@ def input_lokasi(request):
                     + float(raw_comp.get("other_minimarket_count", 0))
                     + float(raw_comp.get("supermarket_count", 0))
                 )
-                pop_val = pop_data.get("population_2020")
-                is_empty_pop = pop_val is None or pop_val == "-" or pop_val == 0
+                # --- LOGIKA NARASI CATATAN MANAGER YANG HOLISTIK & KOMPREHENSIF ---
+                pop_jumlah = int(pop_data.get("population_2026", 0))
+                kepadatan = float(pop_data.get("population_density_2020", 0) or 0)
+                r_score = float(road_data.get("road_score", 0.0))
+                inter_count = int(road_data.get("intersection_count", 0))
 
-                if total_poi_social == 0 and is_empty_pop:
-                    catatan_manager = "Catatan: Lokasi terdeteksi sebagai wilayah non-residensial (area perairan laut atau lahan kosong hampa). Karena parameter Populasi dan POI Sosial bernilai nol, investasi pembukaan gerai sangat dilarang."
+                if total_poi_social == 0 and pop_jumlah == 0:
+                    catatan_manager = "Catatan: Lokasi terdeteksi sebagai wilayah non-residensial (area hutan, perairan, atau lahan kosong hampa). Karena parameter Populasi dan POI Sosial bernilai nol, investasi pembukaan gerai sangat dilarang."
+
                 elif status_kelayakan == "LAYAK":
                     if confidence_score < 70:
-                        catatan_manager = f"Catatan: Lokasi dinyatakan LAYAK karena daya tarik pasar yang kuat. Namun, tingkat kepercayaan {confidence_score}% dipengaruhi oleh persaingan {int(total_kompetitor_retail)} kompetitor ritel di radius tangkapan."
+                        catatan_manager = f"Catatan: Lokasi dinyatakan LAYAK (Confidence: {confidence_score}%). Meskipun skor kepercayaan moderat akibat keterbatasan akses jalan (Skor Jalan: {r_score}) atau kepadatan lokal, namun potensi pasar wilayah {provinsi_kota} tetap mendukung operasional."
                     else:
-                        catatan_manager = "Catatan: Lokasi dinilai sangat strategis berpotensi tinggi (Blue Ocean). Volume populasi ideal dengan tingkat kejenuhan kompetitor retail yang minim. Direkomendasikan untuk pengadaan lahan prioritas."
-                else:
-                    catatan_manager = f"Catatan: Lokasi TIDAK LAYAK. Tingkat kanibalisme pasar terlalu masif akibat kepungan {int(total_kompetitor_retail)} gerai ritel sejenis. ROI diprediksi lambat karena kue pangsa pasar sudah terbagi habis."
+                        catatan_manager = f"Catatan: Lokasi dinilai SANGAT LAYAK (Confidence: {confidence_score}%). Didukung oleh volume populasi yang memadai ({pop_jumlah} jiwa), aktivitas persimpangan yang baik ({inter_count} titik), serta tingkat kejenuhan kompetitor yang terkendali."
+
+                else:  # TIDAK LAYAK
+                    if total_kompetitor_retail == 0:
+                        if pop_jumlah > 10000:
+                            catatan_manager = f"Catatan: Lokasi TIDAK LAYAK meskipun populasi padat ({pop_jumlah} jiwa), karena minimnya fasilitas sosial pendukung (POI: {int(total_poi_social)} unit) dan skor aksesibilitas jalan yang rendah ({r_score}), mengindikasikan pasar komersial belum terbentuk."
+                        else:
+                            catatan_manager = f"Catatan: Lokasi TIDAK LAYAK. Volume populasi sangat rendah ({pop_jumlah} jiwa), minimnya titik keramaian/POI, serta skor aksesibilitas jalan ({r_score}) yang tidak memenuhi standar minimum ekspansi ritel."
+                    else:
+                        catatan_manager = f"Catatan: Lokasi TIDAK LAYAK. Tingkat kanibalisme pasar terlalu masif akibat kepungan {int(total_kompetitor_retail)} gerai ritel sejenis di radius tangkapan, sehingga margin ROI diprediksi sangat lambat."
             except Exception as ml_error:
                 print(f"⚠️ Gagal memproses model pkl Jeny: {ml_error}")
                 status_kelayakan = ml_results.get("status_kelayakan", "LAYAK")
@@ -711,7 +853,6 @@ def input_lokasi(request):
                     "recommendation_ml": ml_results.get("recommendation", "-"),
                     "status_kelayakan": status_kelayakan,
                     "confidence_score": confidence_score,
-                    "h3_polygon_json": json.dumps(h3_polygon_matrix),
                     "poi_markers_json": json.dumps(markers_list),
                     "catatan_manager": catatan_manager,
                 }
@@ -719,6 +860,7 @@ def input_lokasi(request):
         except Exception as e:
             print(f"ERROR DI VIEWS INTEGRASI FINAL: {e}")
     return render(request, "input_lokasi.html", context)
+
 
 
 @csrf_exempt

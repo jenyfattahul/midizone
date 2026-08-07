@@ -39,7 +39,14 @@ class SiteAnalysis(models.Model):
     location = models.ForeignKey(
         Location, on_delete=models.CASCADE, related_name="site_analyses"
     )
-    road_type = models.CharField(max_length=100)
+    # FIX: road_type sebelumnya CharField(max_length=100) -> error
+    # "value too long for type character varying(100)" di lokasi padat
+    # (banyak jenis jalan) karena road_types_desc dari osm_service.py
+    # adalah gabungan semua jenis jalan yang ditemukan, dipisah koma,
+    # tanpa batas panjang (bisa 150-250+ karakter). Diganti TextField
+    # supaya tidak ada batas dan tidak akan error lagi untuk lokasi
+    # sepadat apa pun.
+    road_type = models.TextField()
     intersection_count = models.IntegerField(default=0)  # Tambahan fitur spasial
     region = models.CharField(max_length=50, default="lainnya")  # Klaster ML Zona
     input_date = models.DateTimeField(auto_now_add=True)

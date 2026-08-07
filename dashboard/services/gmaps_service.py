@@ -4,7 +4,7 @@ import math
 # =========================
 # 🔑 API KEY
 # =========================
-API_KEY = "AIzaSyBmPcCht7S9Y5p2ycWrqKiGLrEBoXUKyYY"
+API_KEY = "AIzaSyBwIvN1IBkU2k2VzCNMz4RsHA2jcXojFOY"
 
 
 # =========================
