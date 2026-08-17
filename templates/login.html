@@ -19,135 +19,217 @@
     <div class="right-panel">
         <div class="login-card">
 
-    <h1 class="logo-right">
-        Midi<span class="z-blue">Zone</span>
-    </h1>
+            <h1 class="logo-right">
+                Midi<span class="z-blue">Zone</span>
+            </h1>
 
-    <!-- LOGIN VIEW -->
-    <div id="login-view">
+            <!-- LOGIN VIEW -->
+            <div id="login-view">
 
-        <h2>SELAMAT DATANG</h2>
-        <p>Silakan Sign in ke akun Anda</p>
+                <h2>SELAMAT DATANG</h2>
+                <p>Silakan Sign in ke akun Anda</p>
 
-        <form method="POST">
-            {% csrf_token %}
+                <!-- PESAN ERROR LOGIN -->
+                {% if form.errors %}
+                    <div style="background-color: #ffebee; color: #c62828; padding: 10px 14px; border-radius: 6px; margin-bottom: 15px; font-size: 13px; text-align: center; border: 1px solid #ef9a9a;">
+                        {% if form.non_field_errors %}
+                            {% for error in form.non_field_errors %}
+                                <p style="margin: 0;">{{ error }}</p>
+                            {% endfor %}
+                        {% else %}
+                            <p style="margin: 0;">Username/Email atau password yang Anda masukkan salah.</p>
+                        {% endif %}
+                    </div>
+                {% endif %}
 
-            <div class="form-group">
-                <label>Email</label>
-                <input type="email"
-                       name="username"
-                       placeholder="Masukkan email Anda"
-                       required>
+                <form method="POST">
+                    {% csrf_token %}
+
+                    <div class="form-group">
+                        <label>Username / Email</label>
+                        <input type="text"
+                               name="username"
+                               placeholder="Masukkan username atau email Anda"
+                               required>
+                    </div>
+
+                    <div class="form-group" style="position: relative;">
+                        <label>Password</label>
+
+                        <input type="password"
+                               name="password"
+                               id="id_password"
+                               placeholder="Masukkan password Anda"
+                               required>
+
+                        <span id="togglePassword"
+                              style="position:absolute; right:12px; top:38px; cursor:pointer; user-select:none;">
+                            👁
+                        </span>
+                    </div>
+
+                    <div class="form-options">
+                        <span></span>
+                        <a href="#"
+                           id="show-reset"
+                           class="forgot-link">
+                            Lupa Password?
+                        </a> 
+                    </div>
+
+                    <button type="submit" class="btn-login">
+                        Sign In
+                    </button>
+
+                </form>
+
             </div>
 
-            <div class="form-group" style="position: relative;">
-                <label>Password</label>
+            <!-- RESET VIEW -->
+            <div id="reset-view" style="display:none;">
 
-                <input type="password"
-                       name="password"
-                       id="id_password"
-                       placeholder="Masukkan password Anda"
-                       required>
+                <h2>RESET PASSWORD</h2>
 
-                <span id="togglePassword"
-                      style="position:absolute; right:12px; top:38px; cursor:pointer;">
-                    👁
-                </span>
+                <p>
+                    Masukkan email yang terdaftar untuk menerima link reset password
+                </p>
+
+                <form id="reset-form">
+                    {% csrf_token %}
+
+                    <div class="form-group">
+                        <label>Email</label>
+
+                        <input type="email"
+                               id="reset-email"
+                               name="email"
+                               placeholder="Masukkan email Anda"
+                               required>
+                    </div>
+
+                    <button type="submit" class="btn-login" id="btn-submit-reset">
+                        Kirim Link Reset
+                    </button>
+
+                </form>
+
+                <!-- Tempat Menampilkan Pesan Status Reset -->
+                <p id="reset-message" style="margin-top:15px; font-size:14px; text-align:center; font-weight:bold;"></p>
+
+                <div class="form-options"
+                     style="justify-content:center;margin-top:15px;">
+
+                    <a href="#"
+                       id="back-login"
+                       class="forgot-link">
+                        ← Kembali Login
+                    </a>
+
+                </div>
+
             </div>
-
-            <div class="form-options">
-                <span></span>
-{% comment %} 
-                <a href="#"
-                   id="show-reset"
-                   class="forgot-link">
-                    Lupa Password?
-                </a> {% endcomment %}
-            </div>
-
-            <button type="submit" class="btn-login">
-                Sign In
-            </button>
-
-        </form>
-
-    </div>
-
-    <!-- RESET VIEW -->
-    <div id="reset-view" style="display:none;">
-
-        <h2>RESET PASSWORD</h2>
-
-        <p>
-            Masukkan email yang terdaftar untuk menerima link reset password.
-        </p>
-
-        <form id="reset-form">
-
-            <div class="form-group">
-                <label>Email</label>
-
-                <input type="email"
-                       name="email"
-                       placeholder="Masukkan email Anda"
-                       required>
-            </div>
-
-            <button type="submit" class="btn-login">
-                Kirim Link Reset
-            </button>
-
-        </form>
-
-        <div class="form-options"
-             style="justify-content:center;margin-top:15px;">
-
-            <a href="#"
-               id="back-login"
-               class="forgot-link">
-                ← Kembali Login
-            </a>
 
         </div>
-
     </div>
 
-</div>
-    </div>
     <script>
-    const passwordInput = document.querySelector('#id_password');
-    const toggleBtn = document.querySelector('#togglePassword');
+        // 1. Toggle Intip Password
+        const passwordInput = document.querySelector('#id_password');
+        const toggleBtn = document.querySelector('#togglePassword');
 
-    // Munculkan saat ditekan (mouse down)
-    toggleBtn.addEventListener('mousedown', () => {
-        passwordInput.type = 'text';
-    });
+        toggleBtn.addEventListener('mousedown', () => {
+            passwordInput.type = 'text';
+        });
 
-    // Sembunyikan saat dilepas (mouse up)
-    toggleBtn.addEventListener('mouseup', () => {
-        passwordInput.type = 'password';
-    });
-    
-    // Sembunyikan juga jika mouse keluar dari tombol (misal tidak sengaja tergeser)
-    toggleBtn.addEventListener('mouseleave', () => {
-        passwordInput.type = 'password';
-    });
-    const loginView = document.getElementById("login-view");
-const resetView = document.getElementById("reset-view");
+        toggleBtn.addEventListener('mouseup', () => {
+            passwordInput.type = 'password';
+        });
 
-document.getElementById("show-reset").addEventListener("click", function(e) {
-    e.preventDefault();
+        toggleBtn.addEventListener('mouseleave', () => {
+            passwordInput.type = 'password';
+        });
 
-    loginView.style.display = "none";
-    resetView.style.display = "block";
-});
+        // 2. Navigasi Tampilan Login <-> Reset
+        const loginView = document.getElementById("login-view");
+        const resetView = document.getElementById("reset-view");
+        const showReset = document.getElementById("show-reset");
+        const backLogin = document.getElementById("back-login");
+        const resetMessage = document.getElementById("reset-message");
 
-document.getElementById("back-login").addEventListener("click", function(e) {
-    e.preventDefault();
+        if (showReset) {
+            showReset.addEventListener("click", function(e) {
+                e.preventDefault();
+                loginView.style.display = "none";
+                resetView.style.display = "block";
+                resetMessage.textContent = ""; 
+            });
+        }
 
-    resetView.style.display = "none";
-    loginView.style.display = "block";
-});
-</script>
+        if (backLogin) {
+            backLogin.addEventListener("click", function(e) {
+                e.preventDefault();
+                resetView.style.display = "none";
+                loginView.style.display = "block";
+            });
+        }
+
+        // 3. AJAX Handlers Kirim Reset Link ke Backend
+        const resetForm = document.getElementById("reset-form");
+        const btnSubmitReset = document.getElementById("btn-submit-reset");
+
+        resetForm.addEventListener("submit", function(e) {
+            e.preventDefault();
+
+            const email = document.getElementById("reset-email").value;
+            const csrfToken = document.querySelector('#reset-form [name=csrfmiddlewaretoken]').value;
+
+            btnSubmitReset.disabled = true;
+            resetMessage.style.color = "#555";
+            resetMessage.textContent = "Sedang mengirim email...";
+
+            fetch("{% url 'password_reset_api' %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "X-CSRFToken": csrfToken
+                },
+                body: new URLSearchParams({ "email": email })
+            })
+            .then(async response => {
+                const isJson = response.headers.get('content-type')?.includes('application/json');
+                const data = isJson ? await response.json() : null;
+
+                if (!response.ok) {
+                    const errorMsg = (data && data.message) || `Server Error (${response.status})`;
+                    return Promise.reject(errorMsg);
+                }
+                return data;
+            })
+            .then(data => {
+                btnSubmitReset.disabled = false;
+                if (data.success) {
+                    resetMessage.style.color = "#2e7d32"; // Hijau
+                    resetMessage.textContent = data.message;
+                    document.getElementById("reset-email").value = "";
+
+                    // Kembali ke halaman login secara otomatis setelah 3 detik
+                    setTimeout(() => {
+                        resetView.style.display = "none";
+                        loginView.style.display = "block";
+                        resetMessage.textContent = "";
+                    }, 3000);
+
+                } else {
+                    resetMessage.style.color = "#d32f2f"; // Merah
+                    resetMessage.textContent = data.message;
+                }
+            })
+            .catch(error => {
+                btnSubmitReset.disabled = false;
+                resetMessage.style.color = "#d32f2f";
+                resetMessage.textContent = "Gagal: " + error;
+            });
+        });
+    </script>
 </body>
 </html>

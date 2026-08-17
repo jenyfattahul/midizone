@@ -81,7 +81,7 @@ DATABASES = {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": "midizone",
         "USER": "postgres",
-        "PASSWORD": "Admin123",
+        "PASSWORD": "H09soob",
         "HOST": "localhost",
         "PORT": "5432",
     }
@@ -138,3 +138,17 @@ LOGOUT_REDIRECT_URL = "login"
 # Di settings.py
 X_FRAME_OPTIONS = "SAMEORIGIN"
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+# Konfigurasi Pengiriman Email Gmail (MidiZone)
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = "jenyfattahulsisca@gmail.com"
+EMAIL_HOST_PASSWORD = "weoj cvcu zbit whtc"  # <-- Masukkan 16 digit App Password dari Langkah 1 di sini (tanpa spasi)
+DEFAULT_FROM_EMAIL = "MidiZone Support <jenyfattahulsisca@gmail.com>"
+
+# Pengaturan URL Login & Redirect setelah Reset/Logout
+LOGIN_URL = "/"
+LOGIN_REDIRECT_URL = "/dashboard/"
+LOGOUT_REDIRECT_URL = "/"

@@ -4,7 +4,6 @@ import datetime
 import joblib
 import pandas as pd
 from geopy.geocoders import Nominatim
-import h3
 from weasyprint import HTML
 
 from django.contrib.auth.models import User
@@ -29,7 +28,6 @@ from .models import (
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .models import SiteAnalysis
 from .serializers import SiteAnalysisSerializer
 
 
@@ -117,11 +115,10 @@ def build_map_image_base64(lat, lon, zoom=15, width=600, height=300):
         import requests as _req
         from staticmap import StaticMap, CircleMarker
 
-        # OSM policy requires a meaningful User-Agent
         session = _req.Session()
-        session.headers.update({
-            "User-Agent": "MidiZone/1.0 PT-Midi-Utama-Indonesia site-feasibility-tool"
-        })
+        session.headers.update(
+            {"User-Agent": "MidiZone/1.0 PT-Midi-Utama-Indonesia site-feasibility-tool"}
+        )
 
         tile_servers = [
             "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
@@ -135,7 +132,7 @@ def build_map_image_base64(lat, lon, zoom=15, width=600, height=300):
         for tile_url in tile_servers:
             try:
                 m = StaticMap(width, height, url_template=tile_url)
-                m._session = session          # inject session with User-Agent
+                m._session = session
                 marker = CircleMarker((float(lon), float(lat)), "#e74c3c", 14)
                 m.add_marker(marker)
                 img = m.render(zoom=zoom)
@@ -155,10 +152,8 @@ def build_map_image_base64(lat, lon, zoom=15, width=600, height=300):
       <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#c8dce8" stroke-width="0.6"/>
     </pattern>
   </defs>
-  <!-- Background -->
   <rect width="{width}" height="{height}" fill="#ddeeff"/>
   <rect width="{width}" height="{height}" fill="url(#grid)"/>
-  <!-- Simulated blocks -->
   <rect x="20" y="20" width="120" height="80" rx="3" fill="#c8dce8" opacity="0.6"/>
   <rect x="160" y="20" width="80" height="80" rx="3" fill="#c8dce8" opacity="0.5"/>
   <rect x="260" y="20" width="100" height="80" rx="3" fill="#c8dce8" opacity="0.6"/>
@@ -169,35 +164,29 @@ def build_map_image_base64(lat, lon, zoom=15, width=600, height=300):
   <rect x="280" y="180" width="80" height="100" rx="3" fill="#c8dce8" opacity="0.5"/>
   <rect x="380" y="180" width="100" height="100" rx="3" fill="#c8dce8" opacity="0.6"/>
   <rect x="500" y="180" width="80" height="100" rx="3" fill="#c8dce8" opacity="0.5"/>
-  <!-- Main roads -->
   <rect x="0" y="116" width="{width}" height="48" fill="#f5f5f0"/>
   <line x1="0" y1="140" x2="{width}" y2="140" stroke="#ffd700" stroke-width="1.5" stroke-dasharray="12,8"/>
   <rect x="246" y="0" width="48" height="{height}" fill="#f5f5f0"/>
   <line x1="270" y1="0" x2="270" y2="{height}" stroke="#ffd700" stroke-width="1" stroke-dasharray="10,7"/>
-  <!-- Secondary roads -->
   <rect x="0" y="100" width="{width}" height="6" fill="#e8e8e2" opacity="0.7"/>
   <rect x="0" y="174" width="{width}" height="6" fill="#e8e8e2" opacity="0.7"/>
   <rect x="136" y="0" width="6" height="{height}" fill="#e8e8e2" opacity="0.7"/>
   <rect x="396" y="0" width="6" height="{height}" fill="#e8e8e2" opacity="0.7"/>
-  <!-- Location pin at center -->
   <circle cx="270" cy="140" r="18" fill="#e74c3c" opacity="0.95"/>
   <circle cx="270" cy="140" r="9" fill="white"/>
   <polygon points="270,162 262,175 278,175" fill="#e74c3c" opacity="0.95"/>
-  <!-- Info box -->
   <rect x="330" y="108" width="260" height="64" rx="5" fill="white" opacity="0.9" stroke="#bbb"/>
   <text x="346" y="128" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333" font-weight="bold">Titik Lokasi Kandidat</text>
   <text x="346" y="146" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#555">Lat: {lat}</text>
   <text x="346" y="162" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#555">Lon: {lon}</text>
-  <!-- OSM attribution -->
-  <rect x="0" y="{height-16}" width="{width}" height="16" fill="white" opacity="0.7"/>
-  <text x="{width-5}" y="{height-4}" font-family="Helvetica,Arial,sans-serif" font-size="7" fill="#777" text-anchor="end">© OpenStreetMap contributors</text>
+  <rect x="0" y="{height - 16}" width="{width}" height="16" fill="white" opacity="0.7"/>
+  <text x="{width - 5}" y="{height - 4}" font-family="Helvetica,Arial,sans-serif" font-size="7" fill="#777" text-anchor="end">© OpenStreetMap contributors</text>
 </svg>"""
     b64 = _b64.b64encode(svg.encode("utf-8")).decode()
     return f"data:image/svg+xml;base64,{b64}"
 
 
 def build_static_map_url(lat, lon, zoom=15, size="600x300"):
-    """Wrapper that calls build_map_image_base64 — kept for backward compatibility."""
     try:
         w, h = (int(x) for x in size.split("x"))
     except Exception:
@@ -206,21 +195,16 @@ def build_static_map_url(lat, lon, zoom=15, size="600x300"):
 
 
 from django.db.models import Avg
-from .models import SiteAnalysis, ModelResult
 
 
-@login_required(login_url="login")
 @login_required(login_url="login")
 def dashboard_view(request):
-
     analyses = SiteAnalysis.objects.select_related("location").prefetch_related(
         "results", "snapshots"
     )
 
     total = analyses.count()
-
     highly = ModelResult.objects.filter(feasibility_prediction__iexact="LAYAK").count()
-
     not_rec = ModelResult.objects.filter(
         feasibility_prediction__iexact="TIDAK LAYAK"
     ).count()
@@ -232,7 +216,6 @@ def dashboard_view(request):
     pct_not_rec = round((not_rec / total * 100), 1) if total else 0
 
     jabo = SiteAnalysis.objects.filter(region__iexact="jabodetabek").count()
-
     luar_jabo = total - jabo
 
     snapshot_avg = AnalysisSnapshot.objects.aggregate(
@@ -263,11 +246,7 @@ def dashboard_view(request):
 
     for analysis in analyses:
         result = analysis.results.first()
-
-        if result:
-            prediksi = result.feasibility_prediction
-        else:
-            prediksi = "LAYAK"
+        prediksi = result.feasibility_prediction if result else "LAYAK"
 
         if prediksi.upper() == "LAYAK":
             rekomendasi = "Highly Recommended"
@@ -287,11 +266,7 @@ def dashboard_view(request):
 
     for analysis in analyses.order_by("-input_date")[:5]:
         result = analysis.results.first()
-
-        if result:
-            prediksi = result.feasibility_prediction
-        else:
-            prediksi = "LAYAK"
+        prediksi = result.feasibility_prediction if result else "LAYAK"
 
         if prediksi.upper() == "LAYAK":
             rekomendasi = "Highly Recommended"
@@ -332,11 +307,7 @@ def dashboard_view(request):
         "terbaru": terbaru,
     }
 
-    return render(
-        request,
-        "dashboard.html",
-        context,
-    )
+    return render(request, "dashboard.html", context)
 
 
 @login_required(login_url="login")
@@ -423,14 +394,12 @@ def input_lokasi(request):
             lat_str, lon_str = koordinat.split(",")
             lat, lon = float(lat_str.strip()), float(lon_str.strip())
 
-            # --- OCEAN GUARD: Pengecekan Cepat Area Laut / Hampa ---
             road_data_check = process_road_features(lat, lon) or {}
             pop_data_check = get_population_data(lat, lon) or {}
             if (
                 not road_data_check.get("road_types")
                 and pop_data_check.get("population_2026", 0) == 0
             ):
-                print("⚠️ Titik koordinat terdeteksi di area perairan / wilayah hampa.")
                 context.update(
                     {
                         "latitude": lat,
@@ -443,7 +412,6 @@ def input_lokasi(request):
                     }
                 )
                 return render(request, "input_lokasi.html", context)
-            # -----------------------------------------------------
 
             geolocator = Nominatim(user_agent="midizone_app")
             location = geolocator.reverse(f"{lat}, {lon}", timeout=10)
@@ -520,7 +488,7 @@ def input_lokasi(request):
                     provinsi = "DKI Jakarta"
                 provinsi_kota = f"{kota}, {provinsi}"
 
-                road_data = process_road_features(lat, lon) or {}
+            road_data = process_road_features(lat, lon) or {}
             pop_data = get_population_data(lat, lon) or {}
             prov_kota_lower = provinsi_kota.lower()
             region = (
@@ -531,9 +499,6 @@ def input_lokasi(request):
             poi_competitor_data = get_poi_competitor(lat, lon, region) or {}
             summary = poi_competitor_data.get("summary", {}) or {}
 
-            # --- FIX #1 & #2: ambil count per-kategori dari lokasi yang BENAR,
-            # bukan dari summary (summary cuma punya total_poi/total_competitor,
-            # bukan Restaurant/Sekolah/Bank/RS/Supermarket/Minimarket).
             raw_poi = poi_competitor_data.get("poi", {}) or {}
             raw_comp = poi_competitor_data.get("competitor", {}) or {}
 
@@ -543,13 +508,8 @@ def input_lokasi(request):
             hospital_count = raw_poi.get("hospital", {}).get("count", 0)
             supermarket_count = raw_comp.get("supermarket_count", 0)
             other_minimarket_count = raw_comp.get("other_minimarket_count", 0)
-
-            # total_poi: ambil langsung dari summary dengan key yang BENAR (lowercase,
-            # tanpa spasi -- sesuai apa yang benar-benar dikembalikan gmaps_service.py)
             total_poi_value = summary.get("total_poi", 0)
 
-            # --- FIX #3: road_types dari osm_service.py adalah STRING "a,b,c", bukan
-            # list -- harus di-split dulu sebelum dipakai untuk pengecekan is_main_road.
             road_types_raw = road_data.get("road_types", "")
             if isinstance(road_types_raw, str):
                 road_types_list = [
@@ -558,9 +518,6 @@ def input_lokasi(request):
             else:
                 road_types_list = road_types_raw or []
 
-            # Pakai is_main_road yang SUDAH dihitung dengan benar di osm_service.py
-            # (fungsi is_main_road() di sana sudah termasuk "trunk"), jangan hitung
-            # ulang dengan list yang tidak lengkap.
             is_main_road = int(road_data.get("is_main_road", 0))
 
             scraped_features = {
@@ -599,9 +556,6 @@ def input_lokasi(request):
                 }
 
             markers_list = []
-            raw_poi = poi_competitor_data.get("poi", {})
-            raw_comp = poi_competitor_data.get("competitor", {})
-
             for poi_key in ["restaurant", "school", "bank", "hospital"]:
                 items = (
                     raw_poi.get(poi_key, {}).get("items", [])
@@ -638,7 +592,6 @@ def input_lokasi(request):
                         )
 
             try:
-                # 1. Tentukan nilai fitur kontinu sesuai urutan training 14 fitur
                 input_fitur_kontinu = [
                     float(summary.get("Restaurant", 0)),
                     float(summary.get("Sekolah", 0)),
@@ -664,11 +617,9 @@ def input_lokasi(request):
                         .strip()
                     ),
                     float(len(road_types_list)),
-                    2.0,  # category_2026_encoded (default medium = 2)
+                    2.0,
                 ]
 
-                # 2. Tentukan fitur biner / kategori wilayah berdasarkan wilayah terdeteksi
-                prov_kota_lower = provinsi_kota.lower()
                 is_jabodetabek = (
                     1
                     if (
@@ -704,12 +655,10 @@ def input_lokasi(request):
                 is_maluku = 1 if "maluku" in prov_kota_lower else 0
                 is_papua = 1 if "papua" in prov_kota_lower else 0
 
-                # Fitur rute jalan proxy berdasarkan road_score
                 road_sc = float(road_data.get("road_score", 0.0))
                 is_residential_road = 1 if road_sc < 4 else 0
                 is_commuter_route = 1 if (road_sc >= 4 and road_sc <= 7) else 0
 
-                # Gabungkan semua komponen fitur biner/kategori sesuai urutan saat training
                 input_fitur_biner_lengkap = [
                     float(is_main_road),
                     float(is_jabodetabek),
@@ -756,13 +705,11 @@ def input_lokasi(request):
                     "is_commuter_route",
                 ]
 
-                # Buat DataFrame untuk scaling fitur kontinu
                 df_input_kontinu = pd.DataFrame(
                     [input_fitur_kontinu], columns=nama_kolom_kontinu
                 )
                 fitur_kontinu_scaled = scaler_spasial.transform(df_input_kontinu)[0]
 
-                # Gabungkan kontinu yang sudah di-scale dengan fitur biner/kategori
                 nama_kolom_final = nama_kolom_kontinu + nama_kolom_biner
                 fitur_final_gabungan = (
                     list(fitur_kontinu_scaled) + input_fitur_biner_lengkap
@@ -772,13 +719,10 @@ def input_lokasi(request):
                     [fitur_final_gabungan], columns=nama_kolom_final
                 )
 
-                # Lakukan Prediksi Model
                 prediksi_kelas = model_kelayakan.predict(df_matrix_final)[0]
                 probabilitas = model_kelayakan.predict_proba(df_matrix_final)[0]
                 status_kelayakan = "LAYAK" if prediksi_kelas == 1 else "TIDAK LAYAK"
                 confidence_score = int(probabilitas[prediksi_kelas] * 100)
-
-                # Logika catatan manager... (biarkan seperti sebelumnya)
 
                 rest, sekolah, bank, rs = (
                     float(summary.get("Restaurant", 0)),
@@ -792,31 +736,27 @@ def input_lokasi(request):
                     + float(raw_comp.get("other_minimarket_count", 0))
                     + float(raw_comp.get("supermarket_count", 0))
                 )
-                # --- LOGIKA NARASI CATATAN MANAGER YANG HOLISTIK & KOMPREHENSIF ---
+
                 pop_jumlah = int(pop_data.get("population_2026", 0))
-                kepadatan = float(pop_data.get("population_density_2020", 0) or 0)
-                r_score = float(road_data.get("road_score", 0.0))
                 inter_count = int(road_data.get("intersection_count", 0))
 
                 if total_poi_social == 0 and pop_jumlah == 0:
                     catatan_manager = "Catatan: Lokasi terdeteksi sebagai wilayah non-residensial (area hutan, perairan, atau lahan kosong hampa). Karena parameter Populasi dan POI Sosial bernilai nol, investasi pembukaan gerai sangat dilarang."
-
                 elif status_kelayakan == "LAYAK":
                     if confidence_score < 70:
-                        catatan_manager = f"Catatan: Lokasi dinyatakan LAYAK (Confidence: {confidence_score}%). Meskipun skor kepercayaan moderat akibat keterbatasan akses jalan (Skor Jalan: {r_score}) atau kepadatan lokal, namun potensi pasar wilayah {provinsi_kota} tetap mendukung operasional."
+                        catatan_manager = f"Catatan: Lokasi dinyatakan LAYAK (Confidence: {confidence_score}%). Meskipun skor kepercayaan moderat akibat keterbatasan akses jalan (Skor Jalan: {road_sc}) atau kepadatan lokal, namun potensi pasar wilayah {provinsi_kota} tetap mendukung operasional."
                     else:
                         catatan_manager = f"Catatan: Lokasi dinilai SANGAT LAYAK (Confidence: {confidence_score}%). Didukung oleh volume populasi yang memadai ({pop_jumlah} jiwa), aktivitas persimpangan yang baik ({inter_count} titik), serta tingkat kejenuhan kompetitor yang terkendali."
-
-                else:  # TIDAK LAYAK
+                else:
                     if total_kompetitor_retail == 0:
                         if pop_jumlah > 10000:
-                            catatan_manager = f"Catatan: Lokasi TIDAK LAYAK meskipun populasi padat ({pop_jumlah} jiwa), karena minimnya fasilitas sosial pendukung (POI: {int(total_poi_social)} unit) dan skor aksesibilitas jalan yang rendah ({r_score}), mengindikasikan pasar komersial belum terbentuk."
+                            catatan_manager = f"Catatan: Lokasi TIDAK LAYAK meskipun populasi padat ({pop_jumlah} jiwa), karena minimnya fasilitas sosial pendukung (POI: {int(total_poi_social)} unit) dan skor aksesibilitas jalan yang rendah ({road_sc}), mengindikasikan pasar komersial belum terbentuk."
                         else:
-                            catatan_manager = f"Catatan: Lokasi TIDAK LAYAK. Volume populasi sangat rendah ({pop_jumlah} jiwa), minimnya titik keramaian/POI, serta skor aksesibilitas jalan ({r_score}) yang tidak memenuhi standar minimum ekspansi ritel."
+                            catatan_manager = f"Catatan: Lokasi TIDAK LAYAK. Volume populasi sangat rendah ({pop_jumlah} jiwa), minimnya titik keramaian/POI, serta skor aksesibilitas jalan ({road_sc}) yang tidak memenuhi standar minimum ekspansi ritel."
                     else:
                         catatan_manager = f"Catatan: Lokasi TIDAK LAYAK. Tingkat kanibalisme pasar terlalu masif akibat kepungan {int(total_kompetitor_retail)} gerai ritel sejenis di radius tangkapan, sehingga margin ROI diprediksi sangat lambat."
             except Exception as ml_error:
-                print(f"⚠️ Gagal memproses model pkl Jeny: {ml_error}")
+                print(f"⚠️ Gagal memproses model pkl: {ml_error}")
                 status_kelayakan = ml_results.get("status_kelayakan", "LAYAK")
                 confidence_score = (
                     int(ml_results.get("traffic_score", 87))
@@ -860,7 +800,6 @@ def input_lokasi(request):
         except Exception as e:
             print(f"ERROR DI VIEWS INTEGRASI FINAL: {e}")
     return render(request, "input_lokasi.html", context)
-
 
 
 @csrf_exempt
@@ -912,7 +851,11 @@ def simpan_lokasi(request):
         analysis_obj.save()
         AnalysisPopulation.objects.create(
             analysis=analysis_obj,
-            population_density=clean_float(data.get("population_density_2026", data.get("population_density_2020", 0))),
+            population_density=clean_float(
+                data.get(
+                    "population_density_2026", data.get("population_density_2020", 0)
+                )
+            ),
             population_2020=clean_int(data.get("population_2020", 0)),
             population_2026=clean_int(data.get("population_2026", 0)),
             population_category=data.get("population_category", "-"),
@@ -1007,9 +950,6 @@ def generate_pdf(request, analysis_id):
 
 import zipfile
 import io
-from django.http import HttpResponse
-from django.template.loader import render_to_string
-from weasyprint import HTML
 
 
 def download_pdf_bulk(request):
@@ -1017,26 +957,20 @@ def download_pdf_bulk(request):
     if not ids or ids == [""]:
         return HttpResponse("Tidak ada data dipilih", status=400)
 
-    # 1. Jika cuma satu ID, download PDF langsung
     if len(ids) == 1:
         return generate_pdf(request, ids[0])
 
-    # 2. Jika banyak ID, buat ZIP
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, "w") as zf:
         for aid in ids:
             try:
-                # Ambil data spesifik untuk ID ini
                 analysis = SiteAnalysis.objects.get(analysis_id=aid)
-                # Gunakan .first() untuk menghindari error jika data tidak ditemukan
                 snapshot = AnalysisSnapshot.objects.filter(analysis=analysis).first()
                 demography = AnalysisPopulation.objects.filter(
                     analysis=analysis
                 ).first()
                 model = ModelResult.objects.filter(analysis=analysis).first()
 
-                # Jika snapshot tidak ada, buat objek kosong agar tidak error saat diakses
-                # Kita pakai 0 sebagai fallback agar tidak merusak perhitungan
                 list_poi = [
                     {
                         "kategori": "Restaurant",
@@ -1084,11 +1018,9 @@ def download_pdf_bulk(request):
                     "waktu_cetak": get_indonesian_date(),
                 }
 
-                # Render template
                 html_string = render_to_string("template_pdf.html", context)
                 pdf_data = HTML(string=html_string).write_pdf()
 
-                # Simpan ke ZIP dengan nama unik
                 zf.writestr(
                     f"Laporan_{analysis.nomor_dokumen.replace('/', '_')}.pdf", pdf_data
                 )
@@ -1122,7 +1054,6 @@ def preview_pdf(request, analysis_id):
     demography = AnalysisPopulation.objects.filter(analysis=analysis).first()
     model = ModelResult.objects.filter(analysis=analysis).first()
 
-    # --- TAMBAHKAN DATA INI SUPAYA DATA POI/KOMPETITOR MUNCUL ---
     list_poi = [
         {"kategori": "Restaurant", "nama": f"{snapshot.restaurant_count or 0} unit"},
         {"kategori": "Sekolah", "nama": f"{snapshot.school_count or 0} unit"},
@@ -1140,15 +1071,14 @@ def preview_pdf(request, analysis_id):
             "nama": f"{snapshot.alfamidi_count or 0} unit",
         },
     ]
-    # -----------------------------------------------------------
 
     context = {
         "analysis": analysis,
         "snapshot": snapshot,
         "demography": demography,
         "model": model,
-        "list_poi": list_poi,  # PASTIKAN ADA
-        "list_kompetitor": list_kompetitor,  # PASTIKAN ADA
+        "list_poi": list_poi,
+        "list_kompetitor": list_kompetitor,
         "usulan_lokasi": analysis.location.proposed_name or "-",
         "map_image_url": build_static_map_url(
             analysis.location.latitude, analysis.location.longitude
@@ -1157,12 +1087,56 @@ def preview_pdf(request, analysis_id):
     }
 
     html_string = render_to_string("template_pdf.html", context)
-
     pdf = HTML(string=html_string).write_pdf()
 
     response = HttpResponse(pdf, content_type="application/pdf")
-    # inline = tampilkan di browser (preview)
     response["Content-Disposition"] = 'inline; filename="Preview.pdf"'
-    # nosniff mencegah browser melakukan sniffing tipe konten
     response["X-Content-Type-Options"] = "nosniff"
     return response
+
+
+# dashboard/views.py
+from django.contrib.auth.forms import PasswordResetForm
+from django.http import JsonResponse
+
+
+def password_reset_api(request):
+    if request.method == "POST":
+        email = request.POST.get("email")
+        form = PasswordResetForm({"email": email})
+
+        if form.is_valid():
+            form.save(
+                request=request,
+                use_https=request.is_secure(),
+                from_email="jenyfattahulsisca@gmail.com",
+            )
+            return JsonResponse(
+                {
+                    "success": True,
+                    "message": "Link reset password telah dikirim ke email Anda!",
+                }
+            )
+        else:
+            return JsonResponse(
+                {"success": False, "message": "Email tidak valid atau tidak terdaftar."}
+            )
+
+    return JsonResponse(
+        {"success": False, "message": "Method tidak diizinkan."}, status=405
+    )
+
+
+from django.contrib.auth.views import PasswordResetConfirmView
+from django.urls import reverse_lazy
+
+
+class CustomPasswordResetConfirmView(PasswordResetConfirmView):
+    template_name = "password_reset_confirm.html"
+    success_url = reverse_lazy("login")
+
+    def form_valid(self, form):
+        # Simpan password baru
+        response = super().form_valid(form)
+        # Token otomatis tidak valid karena password user telah berubah di method di atas
+        return response
