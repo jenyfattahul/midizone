@@ -197,6 +197,10 @@
                 <div class="form-group">
                     <form method="GET" action="{% url 'input_lokasi' %}" onsubmit="handleSearchIntersept(event, 'btn-search-manual', 'input-koordinat');">
                         <input type="hidden" name="source" value="manual">
+<<<<<<< HEAD
+=======
+                        <input type="hidden" name="force_update" id="force-update-manual" value="false">
+>>>>>>> ceeab1c78fbccbee53a1faf6f26cd33941b50414
                         
                         <label style="display:block; margin-bottom:6px; font-weight:600; color:#4a5568; font-size:0.9rem;">Usulan Lokasi <span style="font-weight:400; color:#a0aec0;">(nama/label toko yang diusulkan)</span></label>
                         <input
@@ -336,7 +340,7 @@
 
                     <div id="action-panel-manual" class="action-wrapper" style="display: flex; margin-top: 20px;">
                         <button type="button" class="btn btn-secondary" onclick="resetView()">Batal</button>
-                        <button type="button" class="btn btn-primary" onclick="eksekusiSimpanDatabase('action-panel-manual')">Simpan Data</button>
+                        <button type="button" class="btn btn-primary" onclick="konfirmasiSimpanDatabase('action-panel-manual')">Simpan Data</button>
                     </div>
                 </div>
             </div>
@@ -351,6 +355,10 @@
                 <div class="form-group">
                     <form method="GET" action="{% url 'input_lokasi' %}" onsubmit="handleSearchIntersept(event, 'btn-search-peta', 'coord-output');">
                         <input type="hidden" name="source" value="map">
+<<<<<<< HEAD
+=======
+                        <input type="hidden" name="force_update" id="force-update-peta" value="false">
+>>>>>>> ceeab1c78fbccbee53a1faf6f26cd33941b50414
                         
                         <label style="display:block; margin-bottom:6px; font-weight:600; color:#4a5568; font-size:0.9rem;">Usulan Lokasi <span style="font-weight:400; color:#a0aec0;">(nama/label toko yang diusulkan)</span></label>
                         <input
@@ -478,24 +486,30 @@
 
                     <div id="action-panel-peta" class="action-wrapper" style="display: flex; margin-top: 20px;">
                         <button type="button" class="btn btn-secondary" onclick="resetView()">Batal</button>
-                        <button type="button" class="btn btn-primary" onclick="eksekusiSimpanDatabase('action-panel-peta')">Simpan Data</button>
+                        <button type="button" class="btn btn-primary" onclick="konfirmasiSimpanDatabase('action-panel-peta')">Simpan Data</button>
                     </div>
                 </div>
             </div>
         </div> 
     </main>
 
+<<<<<<< HEAD
     <!-- MODAL POPUPS -->
+=======
+    <!-- MODAL POPUPS BERHASIL -->
+>>>>>>> ceeab1c78fbccbee53a1faf6f26cd33941b50414
     <div id="success-modal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 9999;">
         <div class="modal-content" style="background: white; padding: 30px; border-radius: 8px; text-align: center; max-width: 400px; width: 90%;">
             <h3>Data Berhasil di Simpan</h3>
             <p class="doc-number-text" style="margin-bottom: 20px;">No. Dokumen &nbsp;:&nbsp; <span id="doc-id-placeholder" class="doc-number-blue" style="color: #0056b3; font-weight: bold;">LOCSPEC/ANL/V/2026/001</span></p>
             <div class="modal-actions" style="display: flex; gap: 10px; justify-content: center;">
-                <button id="btn-download-pdf" class="btn btn-secondary" onclick="downloadPDF()">Unduh PDF</button>                <button class="btn btn-secondary" onclick="closeSuccessPopup()">Kembali</button>
+                <button id="btn-download-pdf" class="btn btn-secondary" onclick="downloadPDF()">Unduh PDF</button>
+                <button class="btn btn-secondary" onclick="closeSuccessPopup()">Kembali</button>
             </div>
         </div>
     </div>
 
+    <!-- MODAL PERINGATAN PINDAH HALAMAN -->
     <div id="warning-modal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 9999;">
         <div class="modal-content modal-warning-border" style="background: white; padding: 30px; border-radius: 8px; text-align: center; max-width: 400px; width: 90%; border-top: 5px solid #ffc107;">
             <h3 class="warning-title-red" style="color: #dc3545; margin-bottom: 15px;">Peringatan!</h3>
@@ -503,6 +517,30 @@
             <div class="modal-actions" style="display: flex; gap: 10px; justify-content: center;">
                 <button class="btn btn-secondary" onclick="cancelSwitch()">Batal</button>
                 <button class="btn btn-primary" onclick="confirmSwitch()">Ya, Pindah</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PERingATAN DUPLIKASI TITIK KOORDINAT SAAT SEARCH -->
+    <div id="duplicate-warning-modal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 9999;">
+        <div class="modal-content" style="background: white; padding: 30px; border-radius: 8px; text-align: center; max-width: 400px; width: 90%; border-top: 5px solid #ffc107;">
+            <h3 style="color: #dc3545; margin-bottom: 15px;">Peringatan Koordinat Sama!</h3>
+            <p style="margin-bottom: 20px; color: #666; line-height: 1.5;">Titik koordinat ini pernah dicari dan disimpan. Apakah akan dilanjutkan?</p>
+            <div class="modal-actions" style="display: flex; gap: 10px; justify-content: center;">
+                <button class="btn btn-secondary" onclick="cancelDuplicateSearch()">Batal</button>
+                <button class="btn btn-primary" onclick="confirmDuplicateSearch()">Ya, Lanjutkan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🔥 MODAL KONFIRMASI SIMPAN DATA (UPDATE/GANTI) -->
+    <div id="save-warning-modal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 9999;">
+        <div class="modal-content" style="background: white; padding: 30px; border-radius: 8px; text-align: center; max-width: 400px; width: 90%; border-top: 5px solid #0a6ed1;">
+            <h3 style="color: #0a6ed1; margin-bottom: 15px;">Konfirmasi Simpan Data</h3>
+            <p style="margin-bottom: 20px; color: #666; line-height: 1.5;">Apakah Anda yakin ingin menyimpan data ini? Jika data dengan koordinat yang sama sudah ada, data akan ter-update dan data sebelumnya akan terganti.</p>
+            <div class="modal-actions" style="display: flex; gap: 10px; justify-content: center;">
+                <button class="btn btn-secondary" onclick="cancelSimpanDatabase()">Batal</button>
+                <button class="btn btn-primary" onclick="prosesSimpanDatabase()">Lanjutkan</button>
             </div>
         </div>
     </div>
@@ -520,10 +558,16 @@
         let hasUnsavedData = "{% if koordinat and latitude and latitude != '-' %}true{% else %}false{% endif %}" === "true";        
         let pendingTab = ''; 
         let pendingUrl = '';
+        let pendingFormEvent = null; 
+        let pendingSavePanelId = ''; // Menyimpan panelId untuk fungsi simpan
         let map;
         let marker = null;
         let activeActionPanelId = '';
+<<<<<<< HEAD
         let isSubmitting = false; // Flag pengaman double submit
+=======
+        let isSubmitting = false;
+>>>>>>> ceeab1c78fbccbee53a1faf6f26cd33941b50414
 
         function triggerSapStatusBar(message, type = 'success') {
             const sapBar = document.getElementById('sap-message-bar');
@@ -554,6 +598,26 @@
                 sapBar.style.opacity = '0';
                 setTimeout(() => { sapBar.style.display = 'none'; }, 1000);
             }, 6000);
+        }
+
+        // 🔥 FUNGSI PEMANGGIL MODAL KONFIRMASI SIMPAN DATA
+        function konfirmasiSimpanDatabase(panelId) {
+            pendingSavePanelId = panelId;
+            document.getElementById('save-warning-modal').style.display = 'flex';
+        }
+
+        // Aksi Batal pada Modal Simpan
+        function cancelSimpanDatabase() {
+            document.getElementById('save-warning-modal').style.display = 'none';
+            pendingSavePanelId = '';
+        }
+
+        // Aksi Lanjutkan pada Modal Simpan (Menjalankan fungsi asli simpan ke DB)
+        function prosesSimpanDatabase() {
+            document.getElementById('save-warning-modal').style.display = 'none';
+            if (pendingSavePanelId) {
+                eksekusiSimpanDatabase(pendingSavePanelId);
+            }
         }
 
         function eksekusiSimpanDatabase(panelId) {
@@ -648,6 +712,7 @@
 
         function handleSearchIntersept(event, buttonId, inputCoordId) {
             if (isSubmitting) {
+<<<<<<< HEAD
                 event.preventDefault();
                 return;
             }
@@ -667,12 +732,33 @@
                 return;
             }
 
+=======
+                return; 
+            }
+
+            event.preventDefault();
+            
+            let inputUsulanId = (buttonId === 'btn-search-manual') ? 'input-usulan-manual' : 'input-usulan-peta';
+            const inputUsulan = document.getElementById(inputUsulanId);
+            const inputCoord = document.getElementById(inputCoordId);
+            
+            inputUsulan.setCustomValidity('');
+            inputCoord.setCustomValidity('');
+
+            if (!inputUsulan.value.trim()) {
+                inputUsulan.setCustomValidity('Usulan lokasi wajib diisi!');
+                inputUsulan.reportValidity();
+                return;
+            }
+
+>>>>>>> ceeab1c78fbccbee53a1faf6f26cd33941b50414
             if (!inputCoord.value.trim()) {
                 inputCoord.setCustomValidity('Silakan isi koordinat atau pilih di peta!');
                 inputCoord.reportValidity();
                 return;
             }
 
+<<<<<<< HEAD
             isSubmitting = true;
 
             const btn = document.getElementById(buttonId);
@@ -683,6 +769,42 @@
             setTimeout(() => {
                 form.submit();
             }, 300);
+=======
+            pendingFormEvent = event;
+            document.getElementById('duplicate-warning-modal').style.display = 'flex';
+        }
+
+        function confirmDuplicateSearch() {
+            document.getElementById('duplicate-warning-modal').style.display = 'none';
+            
+            if (pendingFormEvent) {
+                isSubmitting = true;
+                let sourceVal = pendingFormEvent.target.querySelector('input[name="source"]').value;
+                let buttonId = (sourceVal === 'manual') ? 'btn-search-manual' : 'btn-search-peta';
+                let forceInputId = (sourceVal === 'manual') ? 'force-update-manual' : 'force-update-peta';
+                
+                let forceInput = document.getElementById(forceInputId);
+                if (forceInput) {
+                    forceInput.value = "true"; 
+                }
+
+                const btn = document.getElementById(buttonId);
+                if(btn) {
+                    btn.innerText = "Preprocessing...";
+                    btn.disabled = true;
+                }
+
+                const form = pendingFormEvent.target;
+                setTimeout(() => {
+                    form.submit();
+                }, 300);
+            }
+        }
+
+        function cancelDuplicateSearch() {
+            document.getElementById('duplicate-warning-modal').style.display = 'none';
+            pendingFormEvent = null;
+>>>>>>> ceeab1c78fbccbee53a1faf6f26cd33941b50414
         }
 
         function attemptSwitchTab(type) {

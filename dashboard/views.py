@@ -132,7 +132,11 @@ def build_map_image_base64(lat, lon, zoom=15, width=600, height=300):
         for tile_url in tile_servers:
             try:
                 m = StaticMap(width, height, url_template=tile_url)
+<<<<<<< HEAD
                 m._session = session
+=======
+                m._session = session  # inject session with User-Agent
+>>>>>>> ceeab1c78fbccbee53a1faf6f26cd33941b50414
                 marker = CircleMarker((float(lon), float(lat)), "#e74c3c", 14)
                 m.add_marker(marker)
                 img = m.render(zoom=zoom)
@@ -179,6 +183,10 @@ def build_map_image_base64(lat, lon, zoom=15, width=600, height=300):
   <text x="346" y="128" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333" font-weight="bold">Titik Lokasi Kandidat</text>
   <text x="346" y="146" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#555">Lat: {lat}</text>
   <text x="346" y="162" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#555">Lon: {lon}</text>
+<<<<<<< HEAD
+=======
+  <!-- OSM attribution -->
+>>>>>>> ceeab1c78fbccbee53a1faf6f26cd33941b50414
   <rect x="0" y="{height - 16}" width="{width}" height="16" fill="white" opacity="0.7"/>
   <text x="{width - 5}" y="{height - 4}" font-family="Helvetica,Arial,sans-serif" font-size="7" fill="#777" text-anchor="end">© OpenStreetMap contributors</text>
 </svg>"""
@@ -394,12 +402,20 @@ def input_lokasi(request):
             lat_str, lon_str = koordinat.split(",")
             lat, lon = float(lat_str.strip()), float(lon_str.strip())
 
+<<<<<<< HEAD
+=======
+            # --- OCEAN GUARD: Pengecekan Cepat Area Laut / Hampa ---
+>>>>>>> ceeab1c78fbccbee53a1faf6f26cd33941b50414
             road_data_check = process_road_features(lat, lon) or {}
             pop_data_check = get_population_data(lat, lon) or {}
             if (
                 not road_data_check.get("road_types")
                 and pop_data_check.get("population_2026", 0) == 0
             ):
+<<<<<<< HEAD
+=======
+                print("⚠️ Titik koordinat terdeteksi di area perairan / wilayah hampa.")
+>>>>>>> ceeab1c78fbccbee53a1faf6f26cd33941b50414
                 context.update(
                     {
                         "latitude": lat,
@@ -412,6 +428,10 @@ def input_lokasi(request):
                     }
                 )
                 return render(request, "input_lokasi.html", context)
+<<<<<<< HEAD
+=======
+            # -----------------------------------------------------
+>>>>>>> ceeab1c78fbccbee53a1faf6f26cd33941b50414
 
             geolocator = Nominatim(user_agent="midizone_app")
             location = geolocator.reverse(f"{lat}, {lon}", timeout=10)
@@ -488,8 +508,8 @@ def input_lokasi(request):
                     provinsi = "DKI Jakarta"
                 provinsi_kota = f"{kota}, {provinsi}"
 
-            road_data = process_road_features(lat, lon) or {}
-            pop_data = get_population_data(lat, lon) or {}
+            road_data = road_data_check
+            pop_data = pop_data_check
             prov_kota_lower = provinsi_kota.lower()
             region = (
                 "jabodetabek"
@@ -592,6 +612,7 @@ def input_lokasi(request):
                         )
 
             try:
+                # 1. Tentukan nilai fitur kontinu sesuai urutan training 14 fitur
                 input_fitur_kontinu = [
                     float(summary.get("Restaurant", 0)),
                     float(summary.get("Sekolah", 0)),
@@ -617,9 +638,14 @@ def input_lokasi(request):
                         .strip()
                     ),
                     float(len(road_types_list)),
-                    2.0,
+                    2.0,  # category_2026_encoded (default medium = 2)
                 ]
 
+<<<<<<< HEAD
+=======
+                # 2. Tentukan fitur biner / kategori wilayah berdasarkan wilayah terdeteksi
+                prov_kota_lower = provinsi_kota.lower()
+>>>>>>> ceeab1c78fbccbee53a1faf6f26cd33941b50414
                 is_jabodetabek = (
                     1
                     if (
@@ -655,10 +681,18 @@ def input_lokasi(request):
                 is_maluku = 1 if "maluku" in prov_kota_lower else 0
                 is_papua = 1 if "papua" in prov_kota_lower else 0
 
+<<<<<<< HEAD
+=======
+                # Fitur rute jalan proxy berdasarkan road_score
+>>>>>>> ceeab1c78fbccbee53a1faf6f26cd33941b50414
                 road_sc = float(road_data.get("road_score", 0.0))
                 is_residential_road = 1 if road_sc < 4 else 0
                 is_commuter_route = 1 if (road_sc >= 4 and road_sc <= 7) else 0
 
+<<<<<<< HEAD
+=======
+                # Gabungkan semua komponen fitur biner/kategori sesuai urutan saat training
+>>>>>>> ceeab1c78fbccbee53a1faf6f26cd33941b50414
                 input_fitur_biner_lengkap = [
                     float(is_main_road),
                     float(is_jabodetabek),
@@ -705,11 +739,19 @@ def input_lokasi(request):
                     "is_commuter_route",
                 ]
 
+<<<<<<< HEAD
+=======
+                # Buat DataFrame untuk scaling fitur kontinu
+>>>>>>> ceeab1c78fbccbee53a1faf6f26cd33941b50414
                 df_input_kontinu = pd.DataFrame(
                     [input_fitur_kontinu], columns=nama_kolom_kontinu
                 )
                 fitur_kontinu_scaled = scaler_spasial.transform(df_input_kontinu)[0]
 
+<<<<<<< HEAD
+=======
+                # Gabungkan kontinu yang sudah di-scale dengan fitur biner/kategori
+>>>>>>> ceeab1c78fbccbee53a1faf6f26cd33941b50414
                 nama_kolom_final = nama_kolom_kontinu + nama_kolom_biner
                 fitur_final_gabungan = (
                     list(fitur_kontinu_scaled) + input_fitur_biner_lengkap
@@ -719,10 +761,16 @@ def input_lokasi(request):
                     [fitur_final_gabungan], columns=nama_kolom_final
                 )
 
+<<<<<<< HEAD
+=======
+                # Lakukan Prediksi Model
+>>>>>>> ceeab1c78fbccbee53a1faf6f26cd33941b50414
                 prediksi_kelas = model_kelayakan.predict(df_matrix_final)[0]
                 probabilitas = model_kelayakan.predict_proba(df_matrix_final)[0]
                 status_kelayakan = "LAYAK" if prediksi_kelas == 1 else "TIDAK LAYAK"
                 confidence_score = int(probabilitas[prediksi_kelas] * 100)
+
+                # Logika catatan manager... (biarkan seperti sebelumnya)
 
                 rest, sekolah, bank, rs = (
                     float(summary.get("Restaurant", 0)),
@@ -736,6 +784,7 @@ def input_lokasi(request):
                     + float(raw_comp.get("other_minimarket_count", 0))
                     + float(raw_comp.get("supermarket_count", 0))
                 )
+<<<<<<< HEAD
 
                 pop_jumlah = int(pop_data.get("population_2026", 0))
                 inter_count = int(road_data.get("intersection_count", 0))
@@ -753,6 +802,29 @@ def input_lokasi(request):
                             catatan_manager = f"Catatan: Lokasi TIDAK LAYAK meskipun populasi padat ({pop_jumlah} jiwa), karena minimnya fasilitas sosial pendukung (POI: {int(total_poi_social)} unit) dan skor aksesibilitas jalan yang rendah ({road_sc}), mengindikasikan pasar komersial belum terbentuk."
                         else:
                             catatan_manager = f"Catatan: Lokasi TIDAK LAYAK. Volume populasi sangat rendah ({pop_jumlah} jiwa), minimnya titik keramaian/POI, serta skor aksesibilitas jalan ({road_sc}) yang tidak memenuhi standar minimum ekspansi ritel."
+=======
+                # --- LOGIKA NARASI CATATAN MANAGER YANG HOLISTIK & KOMPREHENSIF ---
+                pop_jumlah = int(pop_data.get("population_2026", 0))
+                kepadatan = float(pop_data.get("population_density_2020", 0) or 0)
+                r_score = float(road_data.get("road_score", 0.0))
+                inter_count = int(road_data.get("intersection_count", 0))
+
+                if total_poi_social == 0 and pop_jumlah == 0:
+                    catatan_manager = "Catatan: Lokasi terdeteksi sebagai wilayah non-residensial (area hutan, perairan, atau lahan kosong hampa). Karena parameter Populasi dan POI Sosial bernilai nol, investasi pembukaan gerai sangat dilarang."
+
+                elif status_kelayakan == "LAYAK":
+                    if confidence_score < 70:
+                        catatan_manager = f"Catatan: Lokasi dinyatakan LAYAK (Confidence: {confidence_score}%). Meskipun skor kepercayaan moderat akibat keterbatasan akses jalan (Skor Jalan: {r_score}) atau kepadatan lokal, namun potensi pasar wilayah {provinsi_kota} tetap mendukung operasional."
+                    else:
+                        catatan_manager = f"Catatan: Lokasi dinilai SANGAT LAYAK (Confidence: {confidence_score}%). Didukung oleh volume populasi yang memadai ({pop_jumlah} jiwa), aktivitas persimpangan yang baik ({inter_count} titik), serta tingkat kejenuhan kompetitor yang terkendali."
+
+                else:  # TIDAK LAYAK
+                    if total_kompetitor_retail == 0:
+                        if pop_jumlah > 10000:
+                            catatan_manager = f"Catatan: Lokasi TIDAK LAYAK meskipun populasi padat ({pop_jumlah} jiwa), karena minimnya fasilitas sosial pendukung (POI: {int(total_poi_social)} unit) dan skor aksesibilitas jalan yang rendah ({r_score}), mengindikasikan pasar komersial belum terbentuk."
+                        else:
+                            catatan_manager = f"Catatan: Lokasi TIDAK LAYAK. Volume populasi sangat rendah ({pop_jumlah} jiwa), minimnya titik keramaian/POI, serta skor aksesibilitas jalan ({r_score}) yang tidak memenuhi standar minimum ekspansi ritel."
+>>>>>>> ceeab1c78fbccbee53a1faf6f26cd33941b50414
                     else:
                         catatan_manager = f"Catatan: Lokasi TIDAK LAYAK. Tingkat kanibalisme pasar terlalu masif akibat kepungan {int(total_kompetitor_retail)} gerai ritel sejenis di radius tangkapan, sehingga margin ROI diprediksi sangat lambat."
             except Exception as ml_error:
@@ -1093,6 +1165,7 @@ def preview_pdf(request, analysis_id):
     response["Content-Disposition"] = 'inline; filename="Preview.pdf"'
     response["X-Content-Type-Options"] = "nosniff"
     return response
+<<<<<<< HEAD
 
 
 # dashboard/views.py
@@ -1140,3 +1213,5 @@ class CustomPasswordResetConfirmView(PasswordResetConfirmView):
         response = super().form_valid(form)
         # Token otomatis tidak valid karena password user telah berubah di method di atas
         return response
+=======
+>>>>>>> ceeab1c78fbccbee53a1faf6f26cd33941b50414

@@ -79,11 +79,17 @@ WSGI_APPLICATION = "midizone_project.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "midizone",
+        "NAME": "", # add here
         "USER": "postgres",
+<<<<<<< HEAD
         "PASSWORD": "H09soob",
         "HOST": "localhost",
         "PORT": "5432",
+=======
+        "PASSWORD": "", # add here
+        "HOST": "",
+        "PORT": "",
+>>>>>>> ceeab1c78fbccbee53a1faf6f26cd33941b50414
     }
 }
 
@@ -130,12 +136,19 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+<<<<<<< HEAD
 GOOGLE_MAPS_API_KEY = "AIzaSyBwIvN1IBkU2k2VzCNMz4RsHA2jcXojFOY"
+=======
+<<<<<<< HEAD
+GOOGLE_MAPS_API_KEY = "" # add here
+=======
+GOOGLE_MAPS_API_KEY = "AIzaSyBwIvN1IBkU2k2VzCNMz4RsHA2jcXojFOY"
+>>>>>>> 2cfc197 (update dashboard dan input lokasi)
+>>>>>>> ceeab1c78fbccbee53a1faf6f26cd33941b50414
 
 LOGIN_REDIRECT_URL = "dashboard"
 LOGOUT_REDIRECT_URL = "login"
 
-# Di settings.py
 X_FRAME_OPTIONS = "SAMEORIGIN"
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
