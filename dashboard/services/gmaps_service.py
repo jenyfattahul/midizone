@@ -4,7 +4,7 @@ import math
 # =========================
 # 🔑 API KEY
 # =========================
-API_KEY = "AIzaSyBwIvN1IBkU2k2VzCNMz4RsHA2jcXojFOY"
+API_KEY = "" #masukkan api key dari google places
 
 
 # =========================
