@@ -132,11 +132,8 @@ def build_map_image_base64(lat, lon, zoom=15, width=600, height=300):
         for tile_url in tile_servers:
             try:
                 m = StaticMap(width, height, url_template=tile_url)
-<<<<<<< HEAD
-                m._session = session
-=======
                 m._session = session  # inject session with User-Agent
->>>>>>> ceeab1c78fbccbee53a1faf6f26cd33941b50414
+
                 marker = CircleMarker((float(lon), float(lat)), "#e74c3c", 14)
                 m.add_marker(marker)
                 img = m.render(zoom=zoom)
@@ -183,10 +180,6 @@ def build_map_image_base64(lat, lon, zoom=15, width=600, height=300):
   <text x="346" y="128" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333" font-weight="bold">Titik Lokasi Kandidat</text>
   <text x="346" y="146" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#555">Lat: {lat}</text>
   <text x="346" y="162" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#555">Lon: {lon}</text>
-<<<<<<< HEAD
-=======
-  <!-- OSM attribution -->
->>>>>>> ceeab1c78fbccbee53a1faf6f26cd33941b50414
   <rect x="0" y="{height - 16}" width="{width}" height="16" fill="white" opacity="0.7"/>
   <text x="{width - 5}" y="{height - 4}" font-family="Helvetica,Arial,sans-serif" font-size="7" fill="#777" text-anchor="end">© OpenStreetMap contributors</text>
 </svg>"""
@@ -402,20 +395,15 @@ def input_lokasi(request):
             lat_str, lon_str = koordinat.split(",")
             lat, lon = float(lat_str.strip()), float(lon_str.strip())
 
-<<<<<<< HEAD
-=======
             # --- OCEAN GUARD: Pengecekan Cepat Area Laut / Hampa ---
->>>>>>> ceeab1c78fbccbee53a1faf6f26cd33941b50414
             road_data_check = process_road_features(lat, lon) or {}
             pop_data_check = get_population_data(lat, lon) or {}
             if (
                 not road_data_check.get("road_types")
                 and pop_data_check.get("population_2026", 0) == 0
             ):
-<<<<<<< HEAD
-=======
                 print("⚠️ Titik koordinat terdeteksi di area perairan / wilayah hampa.")
->>>>>>> ceeab1c78fbccbee53a1faf6f26cd33941b50414
+
                 context.update(
                     {
                         "latitude": lat,
@@ -428,10 +416,6 @@ def input_lokasi(request):
                     }
                 )
                 return render(request, "input_lokasi.html", context)
-<<<<<<< HEAD
-=======
-            # -----------------------------------------------------
->>>>>>> ceeab1c78fbccbee53a1faf6f26cd33941b50414
 
             geolocator = Nominatim(user_agent="midizone_app")
             location = geolocator.reverse(f"{lat}, {lon}", timeout=10)
@@ -641,11 +625,8 @@ def input_lokasi(request):
                     2.0,  # category_2026_encoded (default medium = 2)
                 ]
 
-<<<<<<< HEAD
-=======
                 # 2. Tentukan fitur biner / kategori wilayah berdasarkan wilayah terdeteksi
                 prov_kota_lower = provinsi_kota.lower()
->>>>>>> ceeab1c78fbccbee53a1faf6f26cd33941b50414
                 is_jabodetabek = (
                     1
                     if (
@@ -681,18 +662,13 @@ def input_lokasi(request):
                 is_maluku = 1 if "maluku" in prov_kota_lower else 0
                 is_papua = 1 if "papua" in prov_kota_lower else 0
 
-<<<<<<< HEAD
-=======
                 # Fitur rute jalan proxy berdasarkan road_score
->>>>>>> ceeab1c78fbccbee53a1faf6f26cd33941b50414
+
                 road_sc = float(road_data.get("road_score", 0.0))
                 is_residential_road = 1 if road_sc < 4 else 0
                 is_commuter_route = 1 if (road_sc >= 4 and road_sc <= 7) else 0
 
-<<<<<<< HEAD
-=======
                 # Gabungkan semua komponen fitur biner/kategori sesuai urutan saat training
->>>>>>> ceeab1c78fbccbee53a1faf6f26cd33941b50414
                 input_fitur_biner_lengkap = [
                     float(is_main_road),
                     float(is_jabodetabek),
@@ -739,19 +715,13 @@ def input_lokasi(request):
                     "is_commuter_route",
                 ]
 
-<<<<<<< HEAD
-=======
                 # Buat DataFrame untuk scaling fitur kontinu
->>>>>>> ceeab1c78fbccbee53a1faf6f26cd33941b50414
                 df_input_kontinu = pd.DataFrame(
                     [input_fitur_kontinu], columns=nama_kolom_kontinu
                 )
                 fitur_kontinu_scaled = scaler_spasial.transform(df_input_kontinu)[0]
 
-<<<<<<< HEAD
-=======
                 # Gabungkan kontinu yang sudah di-scale dengan fitur biner/kategori
->>>>>>> ceeab1c78fbccbee53a1faf6f26cd33941b50414
                 nama_kolom_final = nama_kolom_kontinu + nama_kolom_biner
                 fitur_final_gabungan = (
                     list(fitur_kontinu_scaled) + input_fitur_biner_lengkap
@@ -761,10 +731,7 @@ def input_lokasi(request):
                     [fitur_final_gabungan], columns=nama_kolom_final
                 )
 
-<<<<<<< HEAD
-=======
                 # Lakukan Prediksi Model
->>>>>>> ceeab1c78fbccbee53a1faf6f26cd33941b50414
                 prediksi_kelas = model_kelayakan.predict(df_matrix_final)[0]
                 probabilitas = model_kelayakan.predict_proba(df_matrix_final)[0]
                 status_kelayakan = "LAYAK" if prediksi_kelas == 1 else "TIDAK LAYAK"
@@ -784,7 +751,6 @@ def input_lokasi(request):
                     + float(raw_comp.get("other_minimarket_count", 0))
                     + float(raw_comp.get("supermarket_count", 0))
                 )
-<<<<<<< HEAD
 
                 pop_jumlah = int(pop_data.get("population_2026", 0))
                 inter_count = int(road_data.get("intersection_count", 0))
@@ -1165,7 +1131,6 @@ def preview_pdf(request, analysis_id):
     response["Content-Disposition"] = 'inline; filename="Preview.pdf"'
     response["X-Content-Type-Options"] = "nosniff"
     return response
-<<<<<<< HEAD
 
 
 # dashboard/views.py
@@ -1213,5 +1178,3 @@ class CustomPasswordResetConfirmView(PasswordResetConfirmView):
         response = super().form_valid(form)
         # Token otomatis tidak valid karena password user telah berubah di method di atas
         return response
-=======
->>>>>>> ceeab1c78fbccbee53a1faf6f26cd33941b50414
