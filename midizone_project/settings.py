@@ -136,15 +136,7 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-<<<<<<< HEAD
-GOOGLE_MAPS_API_KEY = "AIzaSyBwIvN1IBkU2k2VzCNMz4RsHA2jcXojFOY"
-=======
-<<<<<<< HEAD
 GOOGLE_MAPS_API_KEY = "" # add here
-=======
-GOOGLE_MAPS_API_KEY = "AIzaSyBwIvN1IBkU2k2VzCNMz4RsHA2jcXojFOY"
->>>>>>> 2cfc197 (update dashboard dan input lokasi)
->>>>>>> ceeab1c78fbccbee53a1faf6f26cd33941b50414
 
 LOGIN_REDIRECT_URL = "dashboard"
 LOGOUT_REDIRECT_URL = "login"
@@ -157,9 +149,9 @@ EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = "jenyfattahulsisca@gmail.com"
-EMAIL_HOST_PASSWORD = "weoj cvcu zbit whtc"  # <-- Masukkan 16 digit App Password dari Langkah 1 di sini (tanpa spasi)
-DEFAULT_FROM_EMAIL = "MidiZone Support <jenyfattahulsisca@gmail.com>"
+EMAIL_HOST_USER = "xx@gmail.com" #masukkan email
+EMAIL_HOST_PASSWORD = ""  #masukkan 16 digit App Password dari Langkah 1 di sini
+DEFAULT_FROM_EMAIL = "MidiZone Support <xx@gmail.com>" #masukkan email
 
 # Pengaturan URL Login & Redirect setelah Reset/Logout
 LOGIN_URL = "/"
